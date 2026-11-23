@@ -75,14 +75,12 @@ public:
 	void SetNumFrames(int numFrames, bool translation, bool compressed);
 	void RemoveQuaternionFlips(void);
 	KeyFrame *GetKeyFrame(int n) {
-		return type & KF_TRANS ?
-			&((KeyFrameTrans*)keyFrames)[n] :
-			&((KeyFrame*)keyFrames)[n];
+		size_t stride = type & KF_TRANS ? sizeof(KeyFrameTrans) : sizeof(KeyFrame);
+		return (KeyFrame*)((uint8*)keyFrames + n * stride);
 	}
 	KeyFrameCompressed *GetKeyFrameCompressed(int n) {
-		return type & KF_TRANS ?
-			&((KeyFrameTransCompressed*)keyFramesCompressed)[n] :
-			&((KeyFrameCompressed*)keyFramesCompressed)[n];
+		size_t stride = type & KF_TRANS ? sizeof(KeyFrameTransCompressed) : sizeof(KeyFrameCompressed);
+		return (KeyFrameCompressed*)((uint8*)keyFramesCompressed + n * stride);
 	}
 	bool HasTranslation(void) { return !!(type & KF_TRANS); }
 	void Uncompress(void);

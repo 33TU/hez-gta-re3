@@ -33,7 +33,17 @@ C_PcSave::DeleteSlot(int32 slot)
 
 	PcSaveHelper.nErrorCode = SAVESTATUS_SUCCESSFUL;
 	sprintf(FileName, "%s%i.b", DefaultPCSaveFileName, slot + 1);
+#ifdef __AVM2__
+	char *path = casepath(FileName);
+	bool removed = path && unlink(path) == 0;
+	free(path);
+	if (!removed) {
+		PcSaveHelper.nErrorCode = SAVESTATUS_DELETEFAILED10;
+		return false;
+	}
+#else
 	DeleteFile(FileName);
+#endif
 	SlotSaveDate[slot][0] = '\0';
 	return true;
 }

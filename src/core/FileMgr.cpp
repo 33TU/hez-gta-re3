@@ -34,6 +34,38 @@ static myFILE myfiles[NUMFILES];
 #include <unistd.h>
 #define _getcwd getcwd
 
+#ifdef __AVM2__
+// The Flash VFS resolves absolute filenames. Keep re3's current directory for relative opens.
+static char vfsDir[256] = "/";
+
+static void normaliseVfsPath(char *path)
+{
+    char *out = path;
+    for(const char *p = path; *p; ++p){
+        char c = *p == '\\' ? '/' : *p;
+        if(c == '/' && out > path && out[-1] == '/') continue;
+        *out++ = c >= 'a' && c <= 'z' ? c-'a'+'A' : c;
+    }
+    while(out > path && (unsigned char)out[-1] <= ' ') --out;
+    *out = 0;
+}
+
+char *flashPath(const char *filename)
+{
+    char path[512];
+    const char *base=(*filename=='/' || *filename=='\\') ? "" : vfsDir;
+    if(snprintf(path,sizeof(path),"%s/%s",base,filename)>=(int)sizeof(path)) return nil;
+    normaliseVfsPath(path);
+    return strdup(path);
+}
+
+static void mychdir(const char *path)
+{
+    if(strlen(path) >= sizeof(vfsDir)) return;
+    strcpy(vfsDir, path);
+    normaliseVfsPath(vfsDir);
+}
+#else
 // Case-insensitivity on linux (from https://github.com/OneSadCookie/fcaseopen)
 void mychdir(char const *path)
 {
@@ -45,6 +77,7 @@ void mychdir(char const *path)
         errno = ENOENT;
     }
 }
+#endif
 #else
 #define mychdir chdir
 #endif
@@ -71,7 +104,16 @@ found:
 	*p++ = 'b';
 	*p = '\0';
 	
+#ifdef __AVM2__
+    char path[512];
+    const char *base = (*filename == '/' || *filename == '\\') ? "" : vfsDir;
+    if(snprintf(path, sizeof(path), "%s/%s", base, filename) >= (int)sizeof(path))
+        return 0;
+    normaliseVfsPath(path);
+    myfiles[fd].file = fopen(path, realmode);
+#else
 	myfiles[fd].file = fcaseopen(filename, realmode);
+#endif
 	if(myfiles[fd].file == nil)
 		return 0;
 	return fd;

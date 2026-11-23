@@ -143,8 +143,8 @@ void CWeather::Init(void)
 void CWeather::Update(void)
 {
 	if(!CReplay::IsPlayingBack()){
-		float fNewInterpolation = (CClock::GetMinutes() + CClock::GetSeconds()/60.0f)/60.0f;
-		if (fNewInterpolation < InterpolationValue) {
+		int seconds = CClock::GetMinutes() * 60 + CClock::GetSeconds();
+		if (seconds < int(InterpolationValue * 3600.0f + 0.5f)) {
 			// new hour
 			OldWeatherType = NewWeatherType;
 			if (ForcedWeatherType >= 0)
@@ -154,7 +154,7 @@ void CWeather::Update(void)
 				NewWeatherType = CStats::NoMoreHurricanes ? WeatherTypesList[WeatherTypeInList] : WeatherTypesList_WithHurricanes[WeatherTypeInList];
 			}
 		}
-		InterpolationValue = fNewInterpolation;
+		InterpolationValue = seconds / 3600.0f;
 	}
 
 #ifndef FINAL

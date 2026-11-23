@@ -57,19 +57,25 @@ public:
 		RwTexture *corona;
 		RwTexture *shadow;
 	};
+#ifdef __AVM2__
+	// The CrossBridge compiler only accepts POD members in the effect union.
+	typedef RwV3d Direction;
+#else
+	typedef CVector Direction;
+#endif
 	struct Particle {
 		int particleType;
-		CVector dir;
+		Direction dir;
 		float scale;
 	};
 	struct Attractor {
-		CVector dir;
+		Direction dir;
 		int8 type;
 		uint8 probability;
 	};
 	struct PedAttractor {
-		CVector queueDir;
-		CVector useDir;
+		Direction queueDir;
+		Direction useDir;
 		int8 type;
 	};
 

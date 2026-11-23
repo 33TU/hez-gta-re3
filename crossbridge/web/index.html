@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; object-src 'none'"
+    >
+    <title>GTA Vice City · AOT</title>
+    <link rel="stylesheet" href="./game.css">
+  </head>
+  <body>
+    <main>
+      <div id="view"><div id="game" tabindex="0" aria-label="GTA Vice City"></div></div>
+      <p id="status" role="status">Loading GTA Vice City…</p>
+      <p id="capture-error" role="status" hidden>
+        Mouse capture was blocked. Click the game to try again.
+      </p>
+      <div class="controls">
+        <label>Resolution <select id="resolution"></select></label>
+        <label>Frame rate <select id="rate"></select></label>
+        <button
+          id="stats"
+          type="button"
+          aria-pressed="false"
+          aria-keyshortcuts="Control+Shift+F"
+          title="Ctrl+Shift+F shows stats, moves the meter through the corners, then hides it"
+          disabled
+        >
+          Show stats
+        </button>
+        <a href="./jit.html">Open the JIT player</a>
+      </div>
+    </main>
+    <script type="module" src="./aot.js"></script>
+  </body>
+</html>

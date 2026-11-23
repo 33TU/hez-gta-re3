@@ -651,6 +651,10 @@ ResetLoadingScreenBar()
 void
 LoadingScreen(const char *str1, const char *str2, const char *splashscreen)
 {
+#ifdef __AVM2__
+    if(str2) printf("Loading %s\n",str2);
+    return;
+#endif
 	CSprite2d *splash;
 
 #ifdef DISABLE_LOADING_SCREEN

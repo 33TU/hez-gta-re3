@@ -1,0 +1,9 @@
+<application xmlns="http://ns.adobe.com/air/application/51.3">
+  <id>revc.crossbridge.game</id><versionNumber>1.0.0</versionNumber><filename>ReVCGame</filename>
+  <initialWindow><content>revc-game.swf</content><title>GTA Vice City</title>
+    <width>640</width><height>480</height><resizable>false</resizable>
+    <renderMode>direct</renderMode><depthAndStencil>true</depthAndStencil><visible>true</visible>
+  </initialWindow>
+  <supportedProfiles>extendedDesktop</supportedProfiles>
+  <diagnostics><traceToConsole>true</traceToConsole></diagnostics>
+</application>

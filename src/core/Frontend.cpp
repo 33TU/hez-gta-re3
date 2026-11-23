@@ -108,6 +108,7 @@ CVector2D mapCrosshair;
 
 #ifdef CUTSCENE_BORDERS_SWITCH
 bool CMenuManager::m_PrefsCutsceneBorders = true;
+#endif
 
 // index of m_PrefsFrameLimiter, 0 is no limit
 const int32 frameLimits[] = { 0, 30, 60, 75, 90, 120, 144, 165, 240 };
@@ -122,7 +123,6 @@ CMenuManager::GetFrameLimit(void)
 		return 0;
 	return frameLimits[m_PrefsFrameLimiter];
 }
-#endif
 
 bool holdingScrollBar; // *(bool*)0x7039B9; // not original name
 
@@ -652,8 +652,10 @@ CMenuManager::CentreMousePointer()
 		glfwSetCursorPos(PSGLOBAL(window), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 #endif
 
+#ifndef RW_NULL
 		PSGLOBAL(lastMousePos.x) = SCREEN_WIDTH / 2;
 		PSGLOBAL(lastMousePos.y) = SCREEN_HEIGHT / 2;
+#endif
 	}
 }
 
@@ -4872,6 +4874,9 @@ CMenuManager::ProcessUserInput(uint8 goDown, uint8 goUp, uint8 optionSelected, u
 				}
 				break;
 			case MENUACTION_PLAYERSETUP:
+#ifdef __AVM2__
+				break;
+#endif
 				CPlayerSkin::BeginFrontendSkinEdit();
 				SwitchToNewScreen(MENUPAGE_SKIN_SELECT);
 				m_bSkinsEnumerated = false;
@@ -4925,14 +4930,14 @@ CMenuManager::ProcessUserInput(uint8 goDown, uint8 goUp, uint8 optionSelected, u
 					ControlsManager.MakeControllerActionsBlank();
 					ControlsManager.InitDefaultControlConfiguration();
 					ControlsManager.InitDefaultControlConfigMouse(MousePointerStateHelper.GetMouseSetUp());
-#if !defined RW_GL3
+#if !defined(RW_GL3) && !defined(RW_NULL)
 					if (AllValidWinJoys.m_aJoys[JOYSTICK1].m_bInitialised) {
 						DIDEVCAPS devCaps;
 						devCaps.dwSize = sizeof(DIDEVCAPS);
 						PSGLOBAL(joy1)->GetCapabilities(&devCaps);
 						ControlsManager.InitDefaultControlConfigJoyPad(devCaps.dwButtons);
 					}
-#else
+#elif defined(RW_GL3)
 					if (PSGLOBAL(joy1id) != -1 && glfwJoystickPresent(PSGLOBAL(joy1id))) {
 						int count;
 						glfwGetJoystickButtons(PSGLOBAL(joy1id), &count);
