@@ -128,11 +128,14 @@ static void render(rw::ObjPipeline*,rw::Atomic *a)
         rw::Raster *tex=m->texture?m->texture->raster:nil;
         uploadRaster(tex);
         const rw::RGBA &c=m->color;
+        // librw enables vertex alpha for translucent materials on each mesh draw.
+        // The game can change the material opacity between draws of the same geometry.
+        int materialFlags = c.alpha < 255 ? flags | 4 : flags;
         uint32 color=c.red | (c.green<<8) | (c.blue<<16) | ((uint32)c.alpha<<24);
         int ambient=(g->flags&rw::Geometry::LIGHT)?
             (int)(255.0f*CTimeCycle::GetAmbientRed()*m->surfaceProps.ambient):0;
         inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).material(%0,%1,%2,%3,%4,%5,%6);"
-                   : : "r"(g),"r"(tex),"r"(part.first),"r"(part.count),"r"(color),"r"(flags),"r"(ambient));
+                   : : "r"(g),"r"(tex),"r"(part.first),"r"(part.count),"r"(color),"r"(materialFlags),"r"(ambient));
     }
 }
 // RenderWare supplies screen vertices for the sky, HUD and text, and world
