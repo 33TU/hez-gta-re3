@@ -3,6 +3,7 @@ export function installGameMouse(game, view) {
     if (typeof view.requestPointerLock !== "function") return;
     const ownsPointer = () => document.pointerLockElement === view;
     const emit = (type, a = 0, b = 0) => game.re3Mouse?.(type, a, b);
+    let stopped = false;
     let wanted = false, pending = false, frame = 0, dx = 0, dy = 0, wheel = 0;
 
     function release() {
@@ -22,7 +23,7 @@ export function installGameMouse(game, view) {
         emit("lock", Number(ownsPointer()));
     }
     function capture() {
-        if (pending || ownsPointer()) return;
+        if (stopped || pending || ownsPointer()) return;
         game.focus({preventScroll:true});
         wanted = pending = true;
         try {
@@ -79,13 +80,15 @@ export function installGameMouse(game, view) {
 
     // These functions are called by the same-origin SWF through ExternalInterface.
     window.re3MouseReady = () => ownsPointer() ? 2 : 1;
-    window.re3ReleaseMouse = () => {
+    window.re3ReleaseMouse = (gameClosed = false) => {
+        if (gameClosed) stopped = true;
         const active = ownsPointer() || pending || document.fullscreenElement === view;
         release();
         if (document.fullscreenElement === view) document.exitFullscreen().catch(() => {});
         return active;
     };
     window.re3Fullscreen = () => {
+        if (stopped) return false;
         if (document.fullscreenElement === view) return window.re3ReleaseMouse();
         capture();
         view.requestFullscreen?.()?.catch(() => {});
