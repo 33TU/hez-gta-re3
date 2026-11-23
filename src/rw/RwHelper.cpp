@@ -504,6 +504,12 @@ CameraSize(RwCamera * camera, RwRect * rect,
 				CMBlur::MotionBlurClose();
 				CMBlur::MotionBlurOpen(camera);
 			}
+#if !defined(GTA_PS2) && !defined(EXTENDED_COLOURFILTER)
+			else{
+				// With trails off, the timecycle tint still uses a cached screen quad.
+				CMBlur::CreateImmediateModeData(camera, rect);
+			}
+#endif
 #endif
 		}
 

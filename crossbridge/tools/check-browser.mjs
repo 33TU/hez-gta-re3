@@ -131,16 +131,42 @@ async function check() {
         const resolution = tab.getByLabel("Resolution");
         const rate = tab.getByLabel("Frame rate");
         const target = tab.locator('#view [data-figure="fps"]');
+        await tab.evaluate(() => {
+            const gl = window.sceneCanvas.getContext("webgl2");
+            const upload = gl.bufferSubData;
+            gl.bufferSubData = function(target, dest, data, offset, length) {
+                // The timecycle tint submits four Im2D vertices (x, y, z, w, RGBA, u, v),
+                // from the top left down the left edge, then back up the right edge.
+                if (target === gl.ARRAY_BUFFER && length === 4 * 28) {
+                    const vertices = new Float32Array(data.buffer, data.byteOffset + offset, 4 * 7);
+                    const corner = (index, x, y, u, v) => {
+                        const i = index * 7;
+                        return vertices[i] === x && vertices[i + 1] === y &&
+                            vertices[i + 5] === u && vertices[i + 6] === v;
+                    };
+                    const width = vertices[2 * 7], height = vertices[2 * 7 + 1];
+                    if (corner(0, 0, 0, 0, 0) && corner(1, 0, height, 0, 1) &&
+                        corner(2, width, height, 1, 1) && corner(3, width, 0, 1, 0)) {
+                        window.tintSize = width + "x" + height;
+                    }
+                }
+                return upload.apply(this, arguments);
+            };
+        });
         for (const [width, height, fps] of [[1280,720,60], [1920,1080,256], [1280,960,30], [640,480,30]]) {
-            await resolution.selectOption(width + "x" + height);
+            const size = width + "x" + height;
+            await resolution.selectOption(size);
             await rate.selectOption(String(fps));
             await until(() => dom("window.sceneCanvas?.width === " + width + " && window.sceneCanvas.height === " + height),
                 "Stage3D did not resize to " + width + " × " + height);
+            await until(() => tab.evaluate(size => window.tintSize === size, size),
+                "Timecycle tint did not resize to " + size);
             await checkSceneSize(width / height);
             await until(async () => (await target.innerText()).includes("/ " + fps + " fps"),
                 "Movie did not adopt the selected frame rate " + fps);
         }
-        console.log("Switched Stage3D back buffers and frame rates during the game");
+        await tab.evaluate(() => { delete window.sceneCanvas.getContext("webgl2").bufferSubData; });
+        console.log("Switched Stage3D back buffers, full-screen tint and frame rates during the game");
     }
     async function checkSceneSize(aspect = 4 / 3) {
         await until(() => dom(`(() => {
@@ -217,7 +243,6 @@ async function check() {
         }
         if(booted && !focused){
             await checkStats();
-            await checkDisplay();
             const box=(await evaluate('JSON.stringify(document.querySelector("#game").getBoundingClientRect())')).value;
             const {x,y,width,height}=JSON.parse(box);
             for (const type of ["mousePressed","mouseReleased"])
@@ -232,6 +257,7 @@ async function check() {
             await tap(" ","Space",32);lastSkip=Date.now();
         }
         if(state?.controls && state.car===-1 && !mouseChecked){
+            await checkDisplay();
             await checkMouse();mouseChecked=true;
         }
         if(state?.controls && state.car===-1 && Date.now()-lastEnter>2500){
