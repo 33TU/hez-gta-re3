@@ -1,5 +1,6 @@
 import {WebGLContext3D} from "@swf2es/context3d/webgl";
 import {installGameMouse} from "./mouse.mjs";
+import {setSceneContext} from "./stats.js";
 
 export const game = document.querySelector("#game");
 const view = document.querySelector("#view");
@@ -15,7 +16,9 @@ export function surface() {
     canvas.setAttribute("aria-label", "Game scene");
     const gl = canvas.getContext("webgl2", {alpha: false, antialias: false, depth: true, stencil: true});
     if (!gl) throw new Error("GTA III requires WebGL 2.");
-    return {canvas, context: new WebGLContext3D(gl)};
+    const context = new WebGLContext3D(gl);
+    setSceneContext(gl);
+    return {canvas, context};
 }
 
 export function showError(error) {

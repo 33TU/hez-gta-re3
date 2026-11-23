@@ -1,5 +1,5 @@
 import {createCodegen} from "@swf2es/codegen";
-import {builtinLibrary, Player, playerglobalLibrary, Scripting} from "@swf2es/player";
+import {builtinLibrary, nativeMemory, Player, playerglobalLibrary, Scripting} from "@swf2es/player";
 import {precompiledModules} from "@swf2es/player-hosts/precompiled";
 // The 0.1.38 web element exposes the IndexedDB cache. Use its playback and
 // Stage3D adapters directly to supply the CLI's importable ES modules.
@@ -8,6 +8,7 @@ import {fetchFor} from "../../node_modules/@swf2es/web/dist/fetching.js";
 import {Playback} from "../../node_modules/@swf2es/web/dist/playback.js";
 import {Stage3DSession} from "../../node_modules/@swf2es/web/dist/stage3d.js";
 import {game, ready, showError, surface} from "./game.js";
+import {bindStats} from "./stats.js";
 
 async function play() {
     const url = new URL("./re3-game.swf", document.baseURI);
@@ -23,7 +24,8 @@ async function play() {
             if (name === "re3Mouse") game.re3Mouse = call;
         },
     }, showError, caller => new URL(caller, url).origin === url.origin);
-    const scripting = new Scripting(await createCodegen(wasm), {
+    const codegen = await createCodegen(wasm);
+    const scripting = new Scripting(codegen, {
         url: url.href,
         fetch: fetchFor({air: null}, false),
         externalInterface: bridge,
@@ -38,6 +40,9 @@ async function play() {
     playback = await Playback.create(game, player, scripting,
         () => ({scale: "showAll", salign: null, wmode: "window", bgcolor: null}), showError, stage);
     await player.start();
+    bindStats(player, () => ({codegen: codegen.memoryBytes(), native: nativeMemory()}), listener => {
+        playback.onFrame = listener;
+    });
     playback.run();
     ready();
 }

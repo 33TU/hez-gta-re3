@@ -48,7 +48,8 @@ export function installGameMouse(game, view) {
     const bits = [1, 4, 2];
     view.addEventListener("mousedown", e => {
         if (!ownsPointer()) {
-            if (e.button === 0) capture();
+            // The player renders its context menu inside the JIT element's shadow tree.
+            if (e.button === 0 && !e.composedPath().some(node => node.hasAttribute?.("data-swf2es-context-menu"))) capture();
         } else if (bits[e.button]) {
             e.preventDefault();
             emit("down", bits[e.button]);

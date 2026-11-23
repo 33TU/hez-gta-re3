@@ -100,6 +100,33 @@ async function check() {
     const relativeMove=(dx,dy)=>evaluate(`document.pointerLockElement.dispatchEvent(new PointerEvent("pointermove", {
         bubbles:true, pointerType:"mouse", pointerId:1, isPrimary:true, button:-1, movementX:${dx}, movementY:${dy}
     }))`);
+    async function checkStats() {
+        const button = tab.getByRole("button", {name:"Show stats"});
+        const overlay = tab.locator("#view dl[aria-label=Performance]");
+        await button.click();
+        await until(async () => {
+            const figures = await overlay.locator("dd").evaluateAll(cells =>
+                Object.fromEntries(cells.map(cell => [cell.dataset.figure, cell.textContent])));
+            return parseFloat(figures.fps) > 0 && parseFloat(figures.frame) > 0 &&
+                Number(figures["gl-calls"]) > 0 && Number(figures["sub-draws"]) >= Number(figures["gl-calls"]);
+        }, "Stats did not report live Stage3D draws and frame measurements");
+        console.log("Stage3D stats", await overlay.innerText());
+        if (await locked() || await button.getAttribute("aria-pressed") !== "true") throw Error("Stats button did not toggle independently of mouse capture");
+        await button.click();
+        if (!await overlay.isHidden() || await button.getAttribute("aria-pressed") !== "false") throw Error("Stats did not hide");
+        // re3 consumes the right mouse button. Shift+F10 opens the player's host menu.
+        const menuKey = () => tab.locator("#game canvas").last().dispatchEvent("keydown", {
+            code:"F10", key:"F10", shiftKey:true, bubbles:true, composed:true, cancelable:true,
+        });
+        await menuKey();
+        await tab.getByRole("menuitem", {name:"Show stats", exact:true}).click();
+        if (await button.getAttribute("aria-pressed") !== "true") throw Error("Stats button did not follow the context menu");
+        await menuKey();
+        await tab.getByRole("menuitem", {name:"Hide stats", exact:true}).click();
+        if (await locked()) throw Error("Selecting a stats menu item captured the mouse");
+        await tab.keyboard.press("Control+Shift+f");
+        if (!await overlay.isVisible()) throw Error("Stats shortcut did not show the meter");
+    }
     async function checkSceneSize() {
         await until(() => dom(`(() => {
             const view = document.querySelector("#view").getBoundingClientRect();
@@ -148,6 +175,12 @@ async function check() {
         await tap("m","KeyM",77);
         await until(fullscreen,"M did not enter fullscreen");
         if (!await locked()) throw Error("M lost capture when entering fullscreen");
+        const overlay = tab.locator("#view dl[aria-label=Performance]");
+        const corner = await overlay.getAttribute("data-corner");
+        await tab.keyboard.press("Control+Shift+f");
+        if (!await overlay.isVisible() || await overlay.getAttribute("data-corner") === corner || !await locked()) {
+            throw Error("Fullscreen stats shortcut did not move the meter while keeping mouse capture");
+        }
         await checkSceneSize();
         const lockedFront=await settledCamera();
         await relativeMove(-155,5);
@@ -168,6 +201,7 @@ async function check() {
             if (/error|failed|refused|could not/i.test(message)) throw Error(message);
         }
         if(booted && !focused){
+            await checkStats();
             const box=(await evaluate('JSON.stringify(document.querySelector("#game").getBoundingClientRect())')).value;
             const {x,y,width,height}=JSON.parse(box);
             for (const type of ["mousePressed","mouseReleased"])

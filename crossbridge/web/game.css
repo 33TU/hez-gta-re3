@@ -5,3 +5,7 @@ main { width: min(640px, 100vw); }
 #game { position: absolute; display: block; overflow: hidden; width: 640px; height: 480px; transform: scale(var(--game-scale, 1)); }
 p { margin: 12px 8px; }
 a { color: #aed3ff; }
+.controls { display: flex; align-items: center; gap: 1rem; }
+#stats { padding: .3rem .65rem; border: 1px solid #82828b; border-radius: .25rem; background: #25252b; color: #eee; font: inherit; }
+#stats[aria-pressed="true"] { background: #aed3ff; color: #151a20; border-color: #aed3ff; }
+#stats:focus-visible { outline: 2px solid #aed3ff; outline-offset: 2px; }

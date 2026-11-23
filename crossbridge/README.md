@@ -35,6 +35,8 @@ Open the [AOT player](http://127.0.0.1:8000/) for normal play. It imports the ru
 
 Click inside the game to focus it, capture the mouse and enable sound. Esc releases the pointer and M toggles fullscreen. Space skips the opening cinematic. Once Claude has control, press F or Enter to enter the Kuruma, wait for 8-Ball, then steer with WASD or the arrow keys. Scroll up or press R to change radio stations.
 
+**Show stats** below the game toggles the swf2es performance meter. It shows FPS, frame time, Stage3D draw counts and memory. While playing or in fullscreen, Ctrl+Shift+F shows the meter, cycles its corner, then hides it.
+
 For swf2es Desktop, open `crossbridge/out/re3-game.swf` with `game.bin` and `audio/` beside it. For Adobe AIR, run `adl app.xml . -- "pack=$PWD/game.bin"` from the output directory, using a native filesystem path for the AIR SDK. Clicking captures in fullscreen in both standalone players.
 
 ## Browser check
