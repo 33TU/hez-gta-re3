@@ -39,6 +39,7 @@ async function check() {
     });
     listen("Runtime.exceptionThrown", event => {error=event.exceptionDetails.exception?.description || event.exceptionDetails.text;});
     listen("Network.responseReceived", e => {
+        if (e.response.status >= 400 && !e.response.url.endsWith("/favicon.ico")) error = "HTTP " + e.response.status + " for " + e.response.url;
         const compiled = /\/compiled\/([^/]+\.js)$/.exec(new URL(e.response.url).pathname);
         if (compiled && e.response.status===200) loadedModules.add(compiled[1]);
         const station=/\/audio\/(head|class|kjah|rise|lips|game|msx|flash|chat)\/\d+\.bin/.exec(e.response.url);
