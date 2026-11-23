@@ -68,10 +68,13 @@ For swf2es Desktop, open `crossbridge/out/re3-game.swf` with `game.bin` and `aud
 
 ## Browser check
 
-With the local server running and Google Chrome installed, these commands exercise mouse capture and release, keyboard input, streamed audio and driving the mission car. The AOT check verifies that the browser loaded all the modules listed in the manifest. Set `CHROME` to use a different Chromium executable.
+With the local server running and Google Chrome installed, these commands exercise mouse capture and release, keyboard input, streamed audio and driving the mission car. The AOT player uses `index.html`, which is also served at `/`. Its check verifies that the browser loaded all the modules listed in the manifest. Set `CHROME` to use a different Chromium executable.
 
 ```sh
-npm run check:browser -- http://127.0.0.1:8000/
+# AOT
+npm run check:browser -- http://127.0.0.1:8000/index.html
+
+# JIT
 npm run check:browser -- http://127.0.0.1:8000/jit.html
 ```
 
