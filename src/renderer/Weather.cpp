@@ -119,8 +119,11 @@ void CWeather::Init(void)
 
 void CWeather::Update(void)
 {
-	float fNewInterpolation = CClock::GetMinutes() * 1.0f / 60;
-	if (fNewInterpolation < InterpolationValue) {
+	const int32 minute = CClock::GetMinutes();
+	// CrossBridge can keep the division in double precision. Compare whole
+	// minutes so rounding the saved fraction cannot look like an hour change.
+	const int32 previousMinute = int32(InterpolationValue * 60.0f + 0.5f);
+	if (minute < previousMinute) {
 		// new hour
 		OldWeatherType = NewWeatherType;
 		if (ForcedWeatherType >= 0)
@@ -138,7 +141,7 @@ void CWeather::Update(void)
 		}
 #endif
 	}
-	InterpolationValue = fNewInterpolation;
+	InterpolationValue = minute / 60.0f;
 	if (CPad::GetPad(1)->GetRightShockJustDown()) {
 		NewWeatherType = (NewWeatherType + 1) % WEATHER_TOTAL;
 		OldWeatherType = NewWeatherType;
