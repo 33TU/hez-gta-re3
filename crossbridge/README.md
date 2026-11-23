@@ -28,7 +28,11 @@ Docker is the default runtime. To use Podman, set `CROSSBRIDGE_DOCKER=podman` in
 
 ## Prepare your local game data
 
-Install Python 3.8 or later and FFmpeg for this step. Set `GTA3_DIR` to the folder containing `data`, `models` and `audio` from the classic game.
+Use an installed copy of **classic Grand Theft Auto III for PC**. Open its installation folder and look for `data/main.scm`, `models/gta3.img`, `anim/ped.ifp`, `text/american.gxt`, and the `audio` folder containing `sfx.sdt` and `sfx.raw`. The packer accepts uppercase and lowercase filenames. In a Wine installation, look under the prefix’s `drive_c/Program Files/Rockstar Games/Grand Theft Auto III`.
+
+Install Python 3.8 or later and FFmpeg. Run `ffmpeg -version` to check that the audio converter can find it. After building the port, run the following commands from the repository root using your game’s installation path. Allow approximately 1.5 GiB for the prepared audio in addition to the game pack.
+
+**Linux or macOS**
 
 ```sh
 GTA3_DIR="/path/to/Grand Theft Auto III"
@@ -37,7 +41,18 @@ python3 crossbridge/tools/prepare_audio.py "$GTA3_DIR" crossbridge/out/audio
 npm start
 ```
 
-The packer fills missing menu labels from re3’s matching language files. If your existing pack shows `FESZ_RM missing` after a mission failure, rerun the `pack.py` command and reload. The existing audio directory can be reused. The audio conversion writes approximately 1.5 GiB. If you already have a prepared pack, you can place or symlink `game.bin` and its sibling `audio/` directory into `crossbridge/out/`. The output directory also holds your private game data after preparation and is ignored by Git.
+**Windows PowerShell**
+
+```powershell
+$gta3 = 'C:\Program Files\Rockstar Games\Grand Theft Auto III'
+py -3 crossbridge/tools/pack.py "$gta3" crossbridge/out/game.bin
+py -3 crossbridge/tools/prepare_audio.py "$gta3" crossbridge/out/audio
+py -3 -m http.server 8000 --bind 127.0.0.1 --directory crossbridge/out
+```
+
+The first command writes `crossbridge/out/game.bin`. The audio converter writes `crossbridge/out/audio/bank.bin` and numbered chunks in per-track folders. Keep the entire `audio/` directory beside `game.bin`. With the server running, open the [AOT player](http://127.0.0.1:8000/) and click the game to enable sound.
+
+The packer fills missing menu labels from re3’s matching language files. If an older pack shows `FESZ_RM missing` after a mission failure, rerun `pack.py` and reload. You can reuse `game.bin` and the entire `audio/` directory across builds by copying or symlinking them into `crossbridge/out/`. Git ignores this directory, which holds your private game data.
 
 ## Play
 
