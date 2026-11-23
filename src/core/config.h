@@ -363,7 +363,6 @@ enum Config {
 //#	define PS2_MENU_USEALLPAGEICONS
 #else
 #	define MAP_ENHANCEMENTS			// Adding waypoint and better mouse support
-#	define GAMEPAD_MENU		// Add gamepad menu
 #	if defined(XINPUT) || defined(__SWITCH__)
 #		define PAD_VIBRATION		// only XInput and the Switch can shake the pad
 #	endif
@@ -377,6 +376,7 @@ enum Config {
 #endif
 
 #	ifdef CUSTOM_FRONTEND_OPTIONS
+#		define GAMEPAD_MENU		// This page is defined in MenuScreensCustom.cpp
 #		define GRAPHICS_MENU_OPTIONS // otherwise Display settings will be scrollable
 #		define NO_ISLAND_LOADING  // disable loadscreen between islands via loading all island data at once, consumes more memory and CPU
 #		define CUTSCENE_BORDERS_SWITCH

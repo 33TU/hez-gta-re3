@@ -53,6 +53,10 @@ export function installGameMouse(game, view) {
     if (ownsPointer()) resetInput();
   });
   window.addEventListener("blur", release);
+  game.addEventListener("keydown", (e) => {
+    if (ownsPointer() && e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey)
+      e.preventDefault();
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) release();
   });

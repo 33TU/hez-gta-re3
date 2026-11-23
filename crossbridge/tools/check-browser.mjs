@@ -68,6 +68,10 @@ try {
     }
     if (!focused) {
       await page.locator("#view").click();
+      await page.waitForFunction(() => document.pointerLockElement?.id === "view");
+      await page.keyboard.press("Tab");
+      if (!(await page.evaluate(() => document.activeElement?.id === "game")))
+        throw Error("Tab moved focus out of the captured game");
       focused = true;
     }
     if (state.intro) sawIntro = true;
