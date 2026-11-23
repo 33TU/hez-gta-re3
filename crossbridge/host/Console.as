@@ -380,6 +380,14 @@ package com.adobe.flascc {
                 ctx.clear(.3,.45,.58,1,1);
                 var flags:int=tickGame();
                 if(stopped) return;
+                if ((flags & 1) == 0) {
+                    stopGame("Game closed.", 0);
+                    if (pageMouse) ExternalInterface.call("re3ReleaseMouse", true);
+                    else if (stage.displayState != StageDisplayState.NORMAL)
+                        stage.displayState = StageDisplayState.NORMAL;
+                    if (air && !capture) air.exit(0);
+                    return;
+                }
                 frame++;
                 if(capture){
                     if((flags&2) && frame%15==0)sendKey(32,true);

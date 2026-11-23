@@ -51,5 +51,6 @@ RwChar **_psGetVideoModeList() {
     return modes;
 }
 RwInt32 _psGetNumVideModes() { return _psGetVideoModeList() ? 1 : 0; }
-void HandleExit() { RsGlobal.quit = TRUE; }
+// Flash dispatches window events between frames. The menu sends rsQUITAPP itself.
+void HandleExit() {}
 RwBool IsForegroundApp() { return !RsGlobal.quit; }
