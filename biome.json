@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "biome.json",
+      "package.json",
+      "tools/*.js",
+      "crossbridge/*.mjs",
+      "crossbridge/tools/*.mjs",
+      "crossbridge/web/*.{js,mjs,css,html}"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": { "formatter": { "quoteStyle": "double", "semicolons": "always" } },
+  "html": { "formatter": { "enabled": true } }
+}
