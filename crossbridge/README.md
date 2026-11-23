@@ -4,7 +4,7 @@ This port builds re3 into a CrossBridge SWF. The browser plays the original open
 
 ## Build
 
-Use Linux with Git, Node.js 22.18 or later, npm, Python 3.8 or later, FFmpeg, and the CrossBridge launcher on your PATH. The launcher runs the pinned SDK image in Docker. Set `CROSSBRIDGE_DOCKER=podman` to use Podman. [CrossBridge launcher setup](https://github.com/33TU/crossbridge#quick-start)
+Install Git, Node.js 22.18 or later with npm, and Docker or Podman with support for Linux amd64 containers. The repository includes the [upstream CrossBridge launchers](https://github.com/33TU/crossbridge/tree/042987bd8c3b60552c5a18736f602d7ec683ad05/bin). npm selects PowerShell on Windows and Bash on Linux and macOS. The SDK runs inside the container.
 
 Run these commands at the root of the fork.
 
@@ -16,9 +16,19 @@ npm run build
 
 The build compiles the current engine sources, applies the Flash-specific librw patch in a temporary directory and writes the output to `crossbridge/out/`. The AOT compiler and browser player use the same locked swf2es release. The build also bundles the browser player, its WebAssembly compiler and package license notices for offline use.
 
+| Command | What it runs |
+| --- | --- |
+| `npm run build` | Build the SWF, compile its AOT modules, and bundle both browser players. |
+| `npm run build:swf` | Compile the game with the pinned CrossBridge SDK image. |
+| `npm run build:aot` | Compile the existing SWF to JavaScript modules. |
+| `npm run build:web` | Bundle the AOT and JIT player pages. |
+| `npm run crossbridge -- gcc --version` | Run a command directly in the SDK with the repository mounted at `/work`. |
+
+Docker is the default runtime. To use Podman, set `CROSSBRIDGE_DOCKER=podman` in your environment (`$env:CROSSBRIDGE_DOCKER = "podman"` in PowerShell). Set `CROSSBRIDGE_IMAGE` to override the pinned SDK image.
+
 ## Prepare your local game data
 
-Set `GTA3_DIR` to the folder containing `data`, `models` and `audio` from the classic game.
+Install Python 3.8 or later and FFmpeg for this step. Set `GTA3_DIR` to the folder containing `data`, `models` and `audio` from the classic game.
 
 ```sh
 GTA3_DIR="/path/to/Grand Theft Auto III"

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Full SDK:
+# CROSSBRIDGE_IMAGE=ghcr.io/33tu/crossbridge:15.0.0.3-full ./bin/crossbridge
+
+image="${CROSSBRIDGE_IMAGE:-ghcr.io/33tu/crossbridge:15.0.0.3-light}"
+runtime="${CROSSBRIDGE_DOCKER:-docker}"
+
+args=(
+    --rm
+    -v "${PWD}:/work"
+    -w /work
+    -e FLEX=/opt/flex
+)
+
+if [[ -d /sys/fs/selinux ]]; then
+    # On SELinux hosts the container process cannot read a bind mount that is
+    # still labelled user_home_t. Relabelling the mount (:z) is not viable: it
+    # rewrites host labels recursively, and Podman refuses outright for $HOME
+    # and other system paths. Turning off label confinement for this one
+    # container grants the same access without touching anything on disk.
+    args+=(--security-opt label=disable)
+fi
+
+if "$runtime" --version 2>/dev/null | grep -qi podman; then
+    # Rootless Podman: preserve the caller's numeric UID/GID inside
+    # the container so bind-mounted files retain normal ownership.
+    args+=(--userns=keep-id)
+
+elif "$runtime" info --format '{{json .SecurityOptions}}' 2>/dev/null \
+        | grep -q '"name=rootless"'; then
+    # Rootless Docker:
+    # container root (UID 0) maps to the invoking host user.
+    # Do NOT pass --user "$UID:$GID".
+    :
+
+else
+    # Normal/rootful Docker:
+    # run as the host UID/GID so generated files aren't owned by root.
+    args+=(--user "$(id -u):$(id -g)")
+fi
+
+if [[ -t 0 && -t 1 ]]; then
+    args+=(-it)
+fi
+
+if [[ $# -eq 0 ]]; then
+    set -- bash
+fi
+
+exec "$runtime" run "${args[@]}" "$image" "$@"
