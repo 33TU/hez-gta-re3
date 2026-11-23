@@ -50,7 +50,7 @@ py -3 crossbridge/tools/prepare_audio.py "$gta3" crossbridge/out/audio
 py -3 -m http.server 8000 --bind 127.0.0.1 --directory crossbridge/out
 ```
 
-The first command writes `crossbridge/out/game.bin`. The audio converter writes `crossbridge/out/audio/bank.bin` and numbered chunks in per-track folders. Keep the entire `audio/` directory beside `game.bin`. With the server running, open the [AOT player](http://127.0.0.1:8000/) and click the game to enable sound.
+The packer writes `crossbridge/out/game.bin`. The audio converter writes `crossbridge/out/audio/bank.bin` and numbered chunks in per-track folders. Keep the entire `audio/` directory beside `game.bin`. With the server running, open the [AOT player](http://127.0.0.1:8000/) and click the game to enable sound.
 
 The packer fills missing menu labels from re3’s matching language files. If an older pack shows `FESZ_RM missing` after a mission failure, rerun `pack.py` and reload. You can reuse `game.bin` and the entire `audio/` directory across builds by copying or symlinking them into `crossbridge/out/`. Git ignores this directory, which holds your private game data.
 
