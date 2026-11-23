@@ -3,6 +3,7 @@
 #include "crossplatform.h"
 #include "platform.h"
 #include "FileMgr.h"
+#include "PCSave.h"
 #include <AS3/AS3.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -13,8 +14,9 @@ long _dwOperatingSystemVersion = 0;
 size_t _dwMemAvailPhys = 64u * 1024 * 1024;
 
 const char *_psGetUserFilesFolder() {
-    mkdir("/userfiles", 0755);
-    return "/userfiles";
+    static const char path[] = "/USERFILES";
+    mkdir(path, 0755);
+    return path;
 }
 void _InputTranslateShiftKeyUpDown(RsKeyCodes *) {}
 
@@ -26,6 +28,7 @@ double psTimer() {
 
 RwBool psInitialize() {
     CFileMgr::Initialise();
+    C_PcSave::SetSaveDirectory(_psGetUserFilesFolder());
     return TRUE;
 }
 void psTerminate() {}
