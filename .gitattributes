@@ -1,2 +1,8 @@
 sdk/* linguist-vendored
 vendor/* linguist-vendored
+
+# These files are executed or applied in a Linux SDK container.
+/tools/crossbridge text eol=lf
+/crossbridge/*.sh text eol=lf
+/crossbridge/*.mk text eol=lf
+/crossbridge/*.patch text eol=lf

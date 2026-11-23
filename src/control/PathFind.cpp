@@ -530,8 +530,14 @@ CPathFind::PreparePathDataForType(uint8 type, CTempNode *tempnodes, CPathInfoFor
 	int i, j, k, l;
 	int l1, l2;
 	int start;
+#ifdef __AVM2__
+	// AVM2 Number locals need rounding to match the binary32 keys in CCarPathLink.
+	volatile float posx, posy, dx, dy;
+	float mag;
+#else
 	float posx, posy;
 	float dx, dy, mag;
+#endif
 	float nearestDist;
 	int nearestId;
 	int next;
@@ -705,6 +711,12 @@ CPathFind::PreparePathDataForType(uint8 type, CTempNode *tempnodes, CPathInfoFor
 				}
 				// k is m_numCarPathLinks+1 if we found one
 				if(k == m_numCarPathLinks){
+#ifdef __AVM2__
+					if(m_numCarPathLinks >= NUM_CARPATHLINKS){
+						fprintf(stderr, "Road link overflow at %d\n", i);
+						exit(1);
+					}
+#endif
 					m_carPathLinks[m_numCarPathLinks].dir.x = tempnodes[j].dirX;
 					m_carPathLinks[m_numCarPathLinks].dir.y = tempnodes[j].dirY;
 					m_carPathLinks[m_numCarPathLinks].pos.x = tempnodes[j].pos.x;
@@ -771,6 +783,12 @@ CPathFind::PreparePathDataForType(uint8 type, CTempNode *tempnodes, CPathInfoFor
 					}
 					// k is m_numCarPathLinks+1 if we found one
 					if(k == m_numCarPathLinks){
+#ifdef __AVM2__
+						if(m_numCarPathLinks >= NUM_CARPATHLINKS){
+							fprintf(stderr, "Road link overflow at %d\n", i);
+							exit(1);
+						}
+#endif
 						m_carPathLinks[m_numCarPathLinks].dir.x = dx;
 						m_carPathLinks[m_numCarPathLinks].dir.y = dy;
 						m_carPathLinks[m_numCarPathLinks].pos.x = posx;

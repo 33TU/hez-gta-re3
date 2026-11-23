@@ -3847,7 +3847,7 @@ CCam::Process_Debug(const CVector&, float, float, float)
 	Front.Normalise();
 	Source = Source + Front*Speed;
 
-	Up = CVector{ 0.0f, 0.0f, 1.0f };
+	Up = CVector(0.0f, 0.0f, 1.0f);
 	CVector Right = CrossProduct(Front, Up);
 	Up = CrossProduct(Right, Front);
 	Source = Source + Up*PanSpeedY + Right*PanSpeedX;

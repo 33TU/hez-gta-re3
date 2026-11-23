@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GTA III · JIT</title>
+  <link rel="stylesheet" href="./game.css">
+</head>
+<body>
+  <main>
+    <div id="view"><swf2es-player id="game" width="640" height="480" unmuteprompt="false" allowfullscreen="true" allowfullscreeninteractive="true"></swf2es-player></div>
+    <p id="status" role="status">Loading GTA III…</p>
+    <p id="capture-error" role="status" hidden>Mouse capture was blocked. Click the game to try again.</p>
+    <div class="controls">
+      <label>Resolution <select id="resolution"></select></label>
+      <label>Frame rate <select id="rate"></select></label>
+      <button id="stats" type="button" aria-pressed="false" aria-keyshortcuts="Control+Shift+F" title="Ctrl+Shift+F shows stats, moves the meter through the corners, then hides it" disabled>Show stats</button>
+      <a href="./index.html">Open the AOT player</a>
+    </div>
+  </main>
+  <script type="module" src="./jit.js"></script>
+</body>
+</html>
