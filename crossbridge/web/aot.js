@@ -7,6 +7,7 @@ import {externalInterfaceHost} from "../../node_modules/@swf2es/web/dist/externa
 import {fetchFor} from "../../node_modules/@swf2es/web/dist/fetching.js";
 import {Playback} from "../../node_modules/@swf2es/web/dist/playback.js";
 import {Stage3DSession} from "../../node_modules/@swf2es/web/dist/stage3d.js";
+import {UncaughtReports} from "../../node_modules/@swf2es/web/dist/uncaught.js";
 import {game, ready, showError, surface} from "./game.js";
 import {bindStats} from "./stats.js";
 
@@ -25,12 +26,22 @@ async function play() {
         },
     }, showError, caller => new URL(caller, url).origin === url.origin);
     const codegen = await createCodegen(wasm);
+    const reports = new UncaughtReports();
     const scripting = new Scripting(codegen, {
         url: url.href,
+        debugger: true, // Include the AS3 stack when the SWF catches a fatal frame error.
         fetch: fetchFor({air: null}, false),
         externalInterface: bridge,
         moduleCache: precompiledModules("./compiled/manifest.json", {importModules: true}),
-        onUncaught: showError,
+        onUncaught(error) {
+            const rt = scripting.rt;
+            try {
+                const line = reports.line(rt.toString(error), rt.detailOf(error), rt.stackOf(error));
+                if (line !== null) showError(line);
+            } catch {
+                showError(error);
+            }
+        },
     });
     let playback;
     const stage = new Stage3DSession(game, scripting, surface, () => playback?.invalidate());

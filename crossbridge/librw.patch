@@ -33,7 +33,52 @@
  void disableAttribPointers(AttribDesc *attribDescs, int32 numAttribs);
 --- a/src/d3d/d3d.cpp
 +++ b/src/d3d/d3d.cpp
-@@ -924,6 +924,8 @@
+@@ -835,6 +835,25 @@
+ 	return 1;
+ }
+ 
++static void
++rgbaFromRGB565(uint8 *out, uint8 *in)
++{
++	uint32 pixel = in[0] | (in[1] << 8);
++	out[0] = ((pixel >> 11) & 31) * 255 / 31;
++	out[1] = ((pixel >> 5) & 63) * 255 / 63;
++	out[2] = (pixel & 31) * 255 / 31;
++	out[3] = 255;
++}
++
++static void
++rgbaFromARGB4444(uint8 *out, uint8 *in)
++{
++	out[0] = (in[1] & 15) * 17;
++	out[1] = (in[0] >> 4) * 17;
++	out[2] = (in[0] & 15) * 17;
++	out[3] = (in[1] >> 4) * 17;
++}
++
+ Image*
+ rasterToImage(Raster *raster)
+ {
+@@ -903,9 +922,16 @@
+ 		conv = conv_ARGB1555_from_RGB555;
+ 		break;
+ 
++	case Raster::C565:
++		depth = 32;
++		conv = rgbaFromRGB565;
++		break;
++	case Raster::C4444:
++		depth = 32;
++		conv = rgbaFromARGB4444;
++		break;
++
+ 	default:
+-	case Raster::C565:
+-	case Raster::C4444:
+ 	case Raster::LUM8:
+ 		RWERROR((ERR_INVRASTER));
+ 		return nil;
+@@ -924,6 +950,8 @@
  	image->allocate();
  
  	if(pallength){

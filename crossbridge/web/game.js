@@ -22,8 +22,14 @@ export function surface() {
 }
 
 export function showError(error) {
-    document.querySelector("#status").textContent = String(error);
     console.error(error);
+    let message;
+    try {
+        message = String(error);
+    } catch {
+        message = "Game error. See the browser console for details.";
+    }
+    document.querySelector("#status").textContent = message;
 }
 
 export function ready() {

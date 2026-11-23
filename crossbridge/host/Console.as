@@ -1,4 +1,5 @@
 package com.adobe.flascc {
+    import C_Run.Exit;
     import com.adobe.flascc.vfs.ISpecialFile;
     import flash.display.*;
     import flash.display3D.*;
@@ -14,6 +15,7 @@ package com.adobe.flascc {
         private var ctx:Context3D, shader:Program3D, overlay:Program3D, bootFn:int, frameFn:int, keyFn:int;
         private var audioRoot:String="audio/", audioReady:Boolean, bankPtr:int, bankBytes:int, mixFn:int;
         private var sound:Sound, outputChannel:SoundChannel, chunkLoads:Array=[];
+        private var stopped:Boolean;
         private var mouseDX:Number=0, mouseDY:Number=0;
         private var heldButtons:int, tappedButtons:int, wheelQueue:Array=[], wheelPulse:Boolean;
         private var pageMouse:Boolean, pageLocked:Boolean;
@@ -70,8 +72,25 @@ package com.adobe.flascc {
             loader.load(new URLRequest("game.bin"));
         }
         private function fail(s:String):void {
-            trace("Game error",s);status.visible=true;status.text=s;removeEventListener(Event.ENTER_FRAME,draw);
-            if(capture && air) air.exit(1);
+            trace("Game error",s);
+            stopGame(s,1);
+        }
+        private function stopGame(message:String,code:int):void {
+            stopped=true;
+            removeEventListener(Event.ENTER_FRAME,draw);
+            started=false;chunkLoads.length=0;
+            if(outputChannel) outputChannel.stop();
+            status.visible=true;status.text=message;
+            if(capture && air) air.exit(code);
+        }
+        private function callGame(fn:int,args:Vector.<int>):int {
+            if(stopped) return 0;
+            try {return CModule.callI(fn,args);}
+            catch(ex:Exit){
+                var message:String="GTA III exited with code "+ex.code+".";
+                trace(message);stopGame(message,ex.code);
+                return 0;
+            }
         }
         private function beginPack(b:ByteArray):void {
             b.position=0;b.endian="littleEndian";
@@ -153,11 +172,17 @@ package com.adobe.flascc {
         private function startAudio():void {
             sound=new Sound();
             sound.addEventListener(SampleDataEvent.SAMPLE_DATA,function(e:SampleDataEvent):void {
-                var ptr:int=CModule.callI(mixFn,noArgs);
+                if(stopped) return;
+                var ptr:int=callGame(mixFn,noArgs);
+                if(stopped) return;
                 e.data.endian=Endian.LITTLE_ENDIAN;
                 e.data.writeBytes(CModule.ram,ptr,4096*8);
             });
             try {outputChannel=sound.play();} catch(err:Error) {trace("Flash sound output",err.message);}
+            if(stopped) {
+                if(outputChannel) outputChannel.stop();
+                return;
+            }
             if(!outputChannel) {
                 trace("Game audio unavailable: sound output could not start");
                 CModule.free(bankPtr);bankPtr=0;bankBytes=0;
@@ -266,7 +291,7 @@ package com.adobe.flascc {
             syncMouseLock();
             frameArgs[0]=int(capture);frameArgs[1]=int(mouseDX);frameArgs[2]=int(mouseDY);
             mouseDX-=frameArgs[1];mouseDY-=frameArgs[2];
-            return CModule.callI(frameFn,frameArgs);
+            return callGame(frameFn,frameArgs);
         }
         private function toggleMouseCapture():void {
             try {
@@ -278,7 +303,7 @@ package com.adobe.flascc {
             } catch(err:Error) {trace("Mouse capture",err.message);}
         }
         private function sendKey(code:int,down:Boolean):void {
-            pressed[code]=down;if(started) CModule.callI(keyFn,Vector.<int>([code,int(down)]));
+            pressed[code]=down;if(started) callGame(keyFn,Vector.<int>([code,int(down)]));
         }
         private function keyboard(e:KeyboardEvent):void {
             var down:Boolean=e.type==KeyboardEvent.KEY_DOWN;
@@ -301,6 +326,7 @@ package com.adobe.flascc {
             b.position=0;return b;
         }
         private function ready(e:Event):void {
+            if(stopped) return;
             ctx=stage.stage3Ds[0].context3D;ctx.configureBackBuffer(640,480,0,true);ctx.setCulling("none");
             shader=ctx.createProgram();
             shader.upload(agal(false,[0x18,0x030f0000,0xe4000000,0,0xe4000000,1,
@@ -328,11 +354,15 @@ package com.adobe.flascc {
                 if(pack){unpack();return;} if(!mounted || !audioReady)return;
                 if(!started){
                     if(bankPtr) startAudio();
-                    if(!CModule.callI(bootFn,Vector.<int>([bankPtr,bankBytes]))) throw Error("Game startup failed");
+                    var booted:int=callGame(bootFn,Vector.<int>([bankPtr,bankBytes]));
+                    if(stopped) return;
+                    if(!booted) throw Error("Game startup failed");
                     started=true;status.visible=false;
                 }
                 ctx.clear(.3,.45,.58,1,1);
-                var flags:int=tickGame();frame++;
+                var flags:int=tickGame();
+                if(stopped) return;
+                frame++;
                 if(capture){
                     if((flags&2) && frame%15==0)sendKey(32,true);
                     if(pressed[32] && frame%15==3)sendKey(32,false);
@@ -348,7 +378,7 @@ package com.adobe.flascc {
                 if(capture && (frame==2 || frame==40 || frame==100 || frame==160 || frame==240 || frame==310)) save(frame);
                 ctx.present();
                 if(capture && (frame==1000 || drivingFrames==100)){removeEventListener(Event.ENTER_FRAME,draw);air.exit(0);}
-            }catch(err:Error){fail(err.toString()+" "+err.getStackTrace());}
+            }catch(err:Error){fail(err.getStackTrace() || err.toString());}
         }
         private function uploadTexture(id:int):void {
             var t:Object=textureData[id], tex:Texture=ctx.createTexture(t.w,t.h,"bgra",false);
