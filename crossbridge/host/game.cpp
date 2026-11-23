@@ -25,19 +25,27 @@ void configureGameAudio(const uint8 *, uint32);
 int mixGameAudio();
 void serviceGameAudio();
 
-static int boot(const uint8 *bank, uint32 bytes)
+static int resizeGame(int width, int height)
+{
+    RsGlobal.maximumWidth=width;
+    RsGlobal.maximumHeight=height;
+    RwRect rect={0,0,width,height};
+    RsEventHandler(rsCAMERASIZE,&rect);
+    return 0;
+}
+
+static int boot(const uint8 *bank, uint32 bytes, int width, int height)
 {
     configureGameAudio(bank, bytes);
     printf("Opening game files\n");
     if(!RsInitialize() || !CGame::InitialiseOnceBeforeRW() || !RsRwInitialize(nil)) return 0;
-    RsGlobal.width=RsGlobal.maximumWidth=640; RsGlobal.height=RsGlobal.maximumHeight=480;
+    RsGlobal.width=RsGlobal.maximumWidth=width; RsGlobal.height=RsGlobal.maximumHeight=height;
     installMenuDevice();
     installGameDevice();
     rw::Texture::setLoadTextures(false);
     printf("Opening RenderWare world\n");
     if(!CGame::InitialiseRenderWare()) return 0;
-    RwRect rect={0,0,640,480};
-    RsEventHandler(rsCAMERASIZE,&rect);
+    resizeGame(width,height);
     ControlsManager.MakeControllerActionsBlank();
     ControlsManager.InitDefaultControlConfiguration();
     ControlsManager.InitDefaultControlConfigMouse(MousePointerStateHelper.GetMouseSetUp());
@@ -126,6 +134,6 @@ static int key(int code,int down){
 }
 int main()
 {
-    inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).startGame(%0,%1,%2,%3);" : : "r"(boot),"r"(tick),"r"(key),"r"(mixGameAudio));
+    inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).startGame(%0,%1,%2,%3,%4);" : : "r"(boot),"r"(tick),"r"(key),"r"(mixGameAudio),"r"(resizeGame));
     AS3_GoAsync();
 }

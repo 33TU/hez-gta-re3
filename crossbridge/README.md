@@ -27,13 +27,15 @@ python3 crossbridge/tools/prepare_audio.py "$GTA3_DIR" crossbridge/out/audio
 npm start
 ```
 
-Preparation is a one-time step per install. The audio conversion writes approximately 1.5 GiB. If you already have a prepared pack, you can place or symlink `game.bin` and its sibling `audio/` directory into `crossbridge/out/`. The output directory also holds your private game data after preparation and is ignored by Git.
+The packer fills missing menu labels from re3’s matching language files. If your existing pack shows `FESZ_RM missing` after a mission failure, rerun the `pack.py` command and reload. The existing audio directory can be reused. The audio conversion writes approximately 1.5 GiB. If you already have a prepared pack, you can place or symlink `game.bin` and its sibling `audio/` directory into `crossbridge/out/`. The output directory also holds your private game data after preparation and is ignored by Git.
 
 ## Play
 
 Open the [AOT player](http://127.0.0.1:8000/) for normal play. It imports the runtime libraries and game code as ES modules from `compiled/manifest.json`. Keep the corresponding `.js` and `.log` files together. The AOT page permits WebAssembly and same-origin scripts in its content security policy. The [JIT player](http://127.0.0.1:8000/jit.html) compiles the same SWF in the browser. For a quick code change, run `npm run build:swf` and reload the JIT page. Run `npm run build:aot` to refresh the AOT modules. Changes to the browser host use `npm run build:web`.
 
 Click inside the game to focus it, capture the mouse and enable sound. Esc releases the pointer and M toggles fullscreen. Space skips the opening cinematic. Once Claude has control, press F or Enter to enter the Kuruma, wait for 8-Ball, then steer with WASD or the arrow keys. Scroll up or press R to change radio stations.
+
+**Resolution** changes the Stage3D back buffer and the game camera while playing. Choose 640 × 480 or 1280 × 960 for 4:3, or 1280 × 720 or 1920 × 1080 for widescreen. **Frame rate** sets a render target up to 256 FPS. **Display refresh** measures the browser’s animation-frame cadence. The simulation runs at 30 Hz. Both browser players remember these choices on the same origin and default to 640 × 480 at 30 FPS.
 
 **Show stats** below the game toggles the swf2es performance meter. It shows FPS, frame time, Stage3D draw counts and memory. While playing or in fullscreen, Ctrl+Shift+F shows the meter, cycles its corner, then hides it.
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "skeleton.h"
 #include <AS3/AS3.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,15 +29,15 @@ static void *getState(int32 state)
 static rw::Raster *cameraRaster(rw::Raster *raster)
 {
     if(raster->type != rw::Raster::CAMERA && raster->type != rw::Raster::ZBUFFER) return nil;
-    raster->width = raster->width ? raster->width : 640;
-    raster->height = raster->height ? raster->height : 480;
+    raster->width = raster->width ? raster->width : RsGlobal.maximumWidth;
+    raster->height = raster->height ? raster->height : RsGlobal.maximumHeight;
     return raster;
 }
 
 static int video(rw::DeviceReq req, void *out, int32 arg)
 {
     if(req == rw::DEVICEGETVIDEOMODEINFO){
-        rw::VideoMode mode = {640, 480, 32, 0};
+        rw::VideoMode mode = {RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, 0};
         *(rw::VideoMode *)out = mode;
         return 1;
     }

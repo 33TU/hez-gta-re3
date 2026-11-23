@@ -27,6 +27,7 @@ package com.adobe.flascc {
         private var status:TextField=new TextField(), pressed:Object={};
         private var gpu:Object={}, textureData:Object={}, geometry:Object={}, quads:Object={};
         private const screen:Vector.<Number>=Vector.<Number>([2/640,0,0,-1,0,-2/480,0,1,0,0,1,0,0,0,0,1]);
+        private var renderWidth:int=640, renderHeight:int=480, resizeFn:int;
         private var mapMatrix:Vector.<Number>=new Vector.<Number>(16,true);
 
         public function Console(container:DisplayObjectContainer=null) {
@@ -188,9 +189,15 @@ package com.adobe.flascc {
                 CModule.free(bankPtr);bankPtr=0;bankBytes=0;
             }
         }
-        public function startGame(boot:int,tick:int,key:int,mix:int):void {
-            mixFn=mix;
+        public function startGame(boot:int,tick:int,key:int,mix:int,resize:int):void {
+            mixFn=mix;resizeFn=resize;
             bootFn=boot;frameFn=tick;keyFn=key;
+            try {
+                if(ExternalInterface.available) {
+                    ExternalInterface.addCallback("re3Display",setDisplay);
+                    ExternalInterface.call("re3DisplayReady");
+                }
+            } catch(noPageDisplay:Error) {}
             try {
                 if(ExternalInterface.available) {
                     var mode:int=int(ExternalInterface.call("re3MouseReady"));
@@ -223,6 +230,17 @@ package com.adobe.flascc {
             slot.addEventListener(Event.CONTEXT3D_CREATE,ready);
             slot.addEventListener(ErrorEvent.ERROR,function(e:ErrorEvent):void {fail(e.text);});
             slot.requestContext3D("auto","baseline");
+        }
+        private function setDisplay(w:int,h:int,fps:int):void {
+            if(stopped || w<32 || h<32 || w>2048 || h>2048 || fps<1 || fps>1000) return;
+            stage.scaleMode=StageScaleMode.NO_SCALE;stage.align=StageAlign.TOP_LEFT;
+            stage.frameRate=fps;
+            if(w==renderWidth && h==renderHeight) return;
+            renderWidth=w;renderHeight=h;
+            screen[0]=2/w;screen[5]=-2/h;
+            status.y=h-50;status.width=w-24;
+            if(ctx) ctx.configureBackBuffer(w,h,0,true);
+            if(started) callGame(resizeFn,Vector.<int>([w,h]));
         }
         private function resetMouse():void {
             mouseDX=mouseDY=0;
@@ -327,7 +345,7 @@ package com.adobe.flascc {
         }
         private function ready(e:Event):void {
             if(stopped) return;
-            ctx=stage.stage3Ds[0].context3D;ctx.configureBackBuffer(640,480,0,true);ctx.setCulling("none");
+            ctx=stage.stage3Ds[0].context3D;ctx.configureBackBuffer(renderWidth,renderHeight,0,true);ctx.setCulling("none");
             shader=ctx.createProgram();
             shader.upload(agal(false,[0x18,0x030f0000,0xe4000000,0,0xe4000000,1,
                 0,0x040f0000,0xe4000002,0,0,0,1,0x020f0000,0xe4000001,0,0xe4000004,1,0x16,0x040f0001,0xe4000000,2,0,0]),
@@ -354,7 +372,7 @@ package com.adobe.flascc {
                 if(pack){unpack();return;} if(!mounted || !audioReady)return;
                 if(!started){
                     if(bankPtr) startAudio();
-                    var booted:int=callGame(bootFn,Vector.<int>([bankPtr,bankBytes]));
+                    var booted:int=callGame(bootFn,Vector.<int>([bankPtr,bankBytes,renderWidth,renderHeight]));
                     if(stopped) return;
                     if(!booted) throw Error("Game startup failed");
                     started=true;status.visible=false;
@@ -486,7 +504,7 @@ package com.adobe.flascc {
             ctx.setVertexBufferAt(2,b.vb,4,"float2");ctx.setTextureAt(0,gpu[tex]);ctx.drawTriangles(b.ib,first,tris);
         }
         private function save(n:int):void {
-            var bmp:BitmapData=new BitmapData(640,480,false,0);
+            var bmp:BitmapData=new BitmapData(renderWidth,renderHeight,false,0);
             ctx.drawToBitmapData(bmp);
             var data:ByteArray=bmp.encode(bmp.rect,new PNGEncoderOptions());
             var file:Class=getDefinitionByName("flash.filesystem.File") as Class;

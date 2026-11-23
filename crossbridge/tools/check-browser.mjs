@@ -127,12 +127,27 @@ async function check() {
         await tab.keyboard.press("Control+Shift+f");
         if (!await overlay.isVisible()) throw Error("Stats shortcut did not show the meter");
     }
-    async function checkSceneSize() {
+    async function checkDisplay() {
+        const resolution = tab.getByLabel("Resolution");
+        const rate = tab.getByLabel("Frame rate");
+        const target = tab.locator('#view [data-figure="fps"]');
+        for (const [width, height, fps] of [[1280,720,60], [1920,1080,256], [1280,960,30], [640,480,30]]) {
+            await resolution.selectOption(width + "x" + height);
+            await rate.selectOption(String(fps));
+            await until(() => dom("window.sceneCanvas?.width === " + width + " && window.sceneCanvas.height === " + height),
+                "Stage3D did not resize to " + width + " × " + height);
+            await checkSceneSize(width / height);
+            await until(async () => (await target.innerText()).includes("/ " + fps + " fps"),
+                "Movie did not adopt the selected frame rate " + fps);
+        }
+        console.log("Switched Stage3D back buffers and frame rates during the game");
+    }
+    async function checkSceneSize(aspect = 4 / 3) {
         await until(() => dom(`(() => {
             const view = document.querySelector("#view").getBoundingClientRect();
             const scene = window.sceneCanvas?.getBoundingClientRect();
-            const width = Math.min(view.width, view.height * 4 / 3);
-            return scene && Math.abs(scene.width - width) < 2 && Math.abs(scene.height - width * 3 / 4) < 2 &&
+            const width = Math.min(view.width, view.height * ${aspect});
+            return scene && Math.abs(scene.width - width) < 2 && Math.abs(scene.height - width / ${aspect}) < 2 &&
                 Math.abs((scene.left - view.left) * 2 + scene.width - view.width) < 2 &&
                 Math.abs((scene.top - view.top) * 2 + scene.height - view.height) < 2;
         })()`), "Stage3D scene did not fit the view");
@@ -202,6 +217,7 @@ async function check() {
         }
         if(booted && !focused){
             await checkStats();
+            await checkDisplay();
             const box=(await evaluate('JSON.stringify(document.querySelector("#game").getBoundingClientRect())')).value;
             const {x,y,width,height}=JSON.parse(box);
             for (const type of ["mousePressed","mouseReleased"])

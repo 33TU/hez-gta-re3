@@ -42,7 +42,8 @@ void psMouseSetPos(RwV2d *) {}
 void _psSelectScreenVM(RwInt32) {}
 RwBool _psSetVideoMode(RwInt32, RwInt32) { return FALSE; }
 RwChar **_psGetVideoModeList() {
-    static RwChar label[] = "640 x 480";
+    static RwChar label[32];
+    snprintf(label, sizeof(label), "%d x %d", int(RsGlobal.maximumWidth), int(RsGlobal.maximumHeight));
     static RwChar *modes[] = {label};
     return modes;
 }

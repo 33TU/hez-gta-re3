@@ -22,7 +22,7 @@ async function play() {
         objectID: game.id,
         alive: () => game.isConnected,
         callback(name, call) {
-            if (name === "re3Mouse") game.re3Mouse = call;
+            if (name === "re3Mouse" || name === "re3Display") game[name] = call;
         },
     }, showError, caller => new URL(caller, url).origin === url.origin);
     const codegen = await createCodegen(wasm);

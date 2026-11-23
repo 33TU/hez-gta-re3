@@ -1,15 +1,12 @@
 import {WebGLContext3D} from "@swf2es/context3d/webgl";
+import {installDisplay} from "./display.js";
 import {installGameMouse} from "./mouse.mjs";
 import {setSceneContext} from "./stats.js";
 
 export const game = document.querySelector("#game");
 const view = document.querySelector("#view");
 installGameMouse(game, view);
-// The Stage3D back buffer stays 640 × 480. Scale it together with the Flash overlay.
-new ResizeObserver(([entry]) => {
-    const {width, height} = entry.contentRect;
-    view.style.setProperty("--game-scale", String(Math.min(width / 640, height / 480)));
-}).observe(view);
+installDisplay(game, view);
 
 export function surface() {
     const canvas = document.createElement("canvas");
