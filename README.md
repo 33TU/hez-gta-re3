@@ -4,6 +4,8 @@
 
 Build GTA III for swf2es with ahead-of-time or in-browser compilation. The same CrossBridge SWF runs in swf2es Desktop and Adobe AIR. [Build and play the port](crossbridge/README.md)
 
+Bring your own installation of classic GTA III for PC. The setup guide shows how to pack its models, missions, sound effects and radio for the player. [Prepare the game assets](crossbridge/README.md#prepare-your-local-game-data)
+
 ## Intro
 
 The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
