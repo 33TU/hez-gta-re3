@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "crossbridge": "node tools/crossbridge.js",
     "build:swf": "node crossbridge/build.mjs",
     "start": "python3 -m http.server --bind 127.0.0.1 --directory crossbridge/out",
@@ -22,6 +24,7 @@
     "node": ">=22.18.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@swf2es/cli": "0.1.38",
     "esbuild": "0.28.2",
     "playwright-core": "1.65.1"
