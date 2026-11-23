@@ -144,9 +144,17 @@ CTxdStore::LoadTxd(int slot, const char *filename)
 
 	ret = false;
 	_rwD3D8TexDictionaryEnableRasterFormatConversion(true);
+#ifdef __AVM2__
+	stream = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMREAD, filename);
+	if(stream == nil){
+		fprintf(stderr, "Could not open texture dictionary %s\n", filename);
+		return false;
+	}
+#else
 	do
 		stream = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMREAD, filename);
 	while(stream == nil);
+#endif
 	ret = LoadTxd(slot, stream);
 	RwStreamClose(stream, nil);
 	return ret;

@@ -268,7 +268,9 @@ enum Config {
 #define MORE_LANGUAGES		// Add more translations to the game
 #define COMPATIBLE_SAVES // this allows changing structs while keeping saves compatible, and keeps saves compatible between platforms, needs to be enabled on 64bit builds!
 #define FIX_INCOMPATIBLE_SAVES // try to fix incompatible saves, requires COMPATIBLE_SAVES
+#ifndef __AVM2__
 #define LOAD_INI_SETTINGS // as the name suggests. fundamental for CUSTOM_FRONTEND_OPTIONS
+#endif
 
 #define NO_MOVIES	// add option to disable intro videos
 
@@ -308,7 +310,7 @@ enum Config {
 #define DISABLE_VSYNC_ON_TEXTURE_CONVERSION // make texture conversion work faster by disabling vsync
 #define ANISOTROPIC_FILTERING	// set all textures to max anisotropic filtering
 //#define USE_TEXTURE_POOL
-#ifdef LIBRW
+#if defined(LIBRW) && !defined(RW_NULL)
 #define EXTENDED_COLOURFILTER		// more options for colour filter (replaces mblur)
 #define EXTENDED_PIPELINES		// custom render pipelines (includes Neo)
 #define SCREEN_DROPLETS			// neo water droplets
@@ -365,7 +367,9 @@ enum Config {
 //#	define CIRCLE_BACK_BUTTON
 //#	define PS2_LIKE_MENU	// An effort to recreate PS2 menu, cycling through tabs, different bg etc.
 //#	define PS2_SAVE_DIALOG		// PS2 style save dialog with transparent black box
+#ifndef __AVM2__
 #	define CUSTOM_FRONTEND_OPTIONS
+#endif
 
 #	ifdef CUSTOM_FRONTEND_OPTIONS
 #		define MENU_MAP			// VC-like menu map. Won't appear if you don't have our menu.txd

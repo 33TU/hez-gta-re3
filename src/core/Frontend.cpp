@@ -822,8 +822,10 @@ CMenuManager::CentreMousePointer()
 		glfwSetCursorPos(PSGLOBAL(window), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 #endif
 
+#ifndef RW_NULL
 		PSGLOBAL(lastMousePos.x) = SCREEN_WIDTH / 2;
 		PSGLOBAL(lastMousePos.y) = SCREEN_HEIGHT / 2;
+#endif
 	}
 }
 
@@ -5074,6 +5076,10 @@ CMenuManager::ProcessButtonPresses(void)
 #endif
 					break;
 				case MENUACTION_PLAYERSETUP:
+#ifdef __AVM2__
+					// The SWF starts directly in-game and has no skin selection page.
+					break;
+#endif
 					CPlayerSkin::BeginFrontendSkinEdit();
 					ChangeScreen(MENUPAGE_SKIN_SELECT, 0, true, true);
 					m_nCurrExLayer = HOVEROPTION_LIST;
@@ -5128,14 +5134,14 @@ CMenuManager::ProcessButtonPresses(void)
 						ControlsManager.MakeControllerActionsBlank();
 						ControlsManager.InitDefaultControlConfiguration();
 						ControlsManager.InitDefaultControlConfigMouse(MousePointerStateHelper.GetMouseSetUp());
-#if !defined RW_GL3
+#if !defined(RW_GL3) && !defined(RW_NULL)
 						if (AllValidWinJoys.m_aJoys[JOYSTICK1].m_bInitialised) {
 							DIDEVCAPS devCaps;
 							devCaps.dwSize = sizeof(DIDEVCAPS);
 							PSGLOBAL(joy1)->GetCapabilities(&devCaps);
 							ControlsManager.InitDefaultControlConfigJoyPad(devCaps.dwButtons);
 						}
-#else
+#elif defined(RW_GL3)
 						if (PSGLOBAL(joy1id) != -1 && glfwJoystickPresent(PSGLOBAL(joy1id))) {
 							int count;
 							glfwGetJoystickButtons(PSGLOBAL(joy1id), &count);

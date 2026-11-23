@@ -1,5 +1,9 @@
 <img src="https://github.com/hezkore/hez-gta-re3/blob/master/res/images/logo_1024.png?raw=true" alt="re3 logo" width="200">
 
+## Browser port
+
+Build GTA III for swf2es with ahead-of-time or in-browser compilation. The same CrossBridge SWF runs in swf2es Desktop and Adobe AIR. [Build and play the port](crossbridge/README.md)
+
 ## Intro
 
 The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\

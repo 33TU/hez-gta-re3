@@ -182,6 +182,10 @@ int _caserename(const char *old_filename, const char *new_filename)
 // Returned string should freed manually (if exists)
 char* casepath(char const* path, bool checkPathFirst)
 {
+#ifdef __AVM2__
+    extern char *flashPath(const char *);
+    return flashPath(path);
+#endif
     if (checkPathFirst && access(path, F_OK) != -1) {
         // File path is correct
         return nil;

@@ -49,9 +49,15 @@ public:
 	void SetNumFrames(int numFrames, bool translation);
 	void RemoveQuaternionFlips(void);
 	KeyFrame *GetKeyFrame(int n) {
+#ifdef __AVM2__
+		// CrossBridge miscompiles the conditional on base/derived array pointers.
+		size_t stride = (type & KF_TRANS) ? sizeof(KeyFrameTrans) : sizeof(KeyFrame);
+		return (KeyFrame*)((uint8*)keyFrames + n * stride);
+#else
 		return type & KF_TRANS ?
 			&((KeyFrameTrans*)keyFrames)[n] :
 			&((KeyFrame*)keyFrames)[n];
+#endif
 	}
 	bool HasTranslation(void) { return !!(type & KF_TRANS); }
 	void Uncompress(void);

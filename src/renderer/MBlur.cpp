@@ -26,6 +26,19 @@ static RwImVertexIndex Index[6] = { 0, 1, 2, 0, 2, 3 };
 #ifndef LIBRW
 extern "C" D3DCAPS8 _RwD3D8DeviceCaps;
 #endif
+#ifdef __AVM2__
+// For positive raster sizes the original picks the power of two strictly above the size.
+static uint32
+BlurBufferSize(int32 size)
+{
+	int exponent;
+	if(size <= 0)
+		return 0;
+	frexp(size, &exponent);
+	return 1u << exponent;
+}
+#endif
+
 RwBool
 CMBlur::MotionBlurOpen(RwCamera *cam)
 {
@@ -77,8 +90,13 @@ CMBlur::MotionBlurOpen(RwCamera *cam)
 		
 	if(BlurOn)
 	{
+#ifdef __AVM2__
+		uint32 width  = BlurBufferSize(RwRasterGetWidth(RwCameraGetRaster(cam)));
+		uint32 height = BlurBufferSize(RwRasterGetHeight(RwCameraGetRaster(cam)));
+#else
 		uint32 width  = Pow(2.0f, int32(log2(RwRasterGetWidth (RwCameraGetRaster(cam))))+1);
 		uint32 height = Pow(2.0f, int32(log2(RwRasterGetHeight(RwCameraGetRaster(cam))))+1);
+#endif
 		uint32 depth  = RwRasterGetDepth(RwCameraGetRaster(cam));
 		
 #ifndef LIBRW

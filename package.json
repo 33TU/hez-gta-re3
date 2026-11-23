@@ -1,0 +1,28 @@
+{
+  "name": "re3-crossbridge",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:swf": "bash crossbridge/build.sh",
+    "start": "python3 -m http.server --bind 127.0.0.1 --directory crossbridge/out",
+    "build:aot": "swf2es compile crossbridge/out/re3-game.swf -o crossbridge/out/compiled --emit-libraries",
+    "build": "npm run build:swf && npm run build:aot && npm run build:web",
+    "build:web": "node crossbridge/web/build.mjs",
+    "check:browser": "node crossbridge/tools/check-browser.mjs"
+  },
+  "dependencies": {
+    "@swf2es/codegen": "0.1.38",
+    "@swf2es/context3d": "0.1.38",
+    "@swf2es/player": "0.1.38",
+    "@swf2es/player-hosts": "0.1.38",
+    "@swf2es/web": "0.1.38"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "devDependencies": {
+    "@swf2es/cli": "0.1.38",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.65.1"
+  }
+}

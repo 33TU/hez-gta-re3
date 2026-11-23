@@ -1,0 +1,44 @@
+--- a/src/image.cpp
++++ b/src/image.cpp
+@@ -412,7 +412,7 @@
+ 	dst[1] = src[1];
+ 	// bits
+ 	uint64 bits = *(uint64*)&src[2];
+-	uint64 flipbits = bits & 0xFFFFFF000000;
++	uint64 flipbits = bits & 0xFFFFFF000000ULL;
+ 	flipbits |= (bits>>12) & 0xFFF;
+ 	flipbits |= (bits<<12) & 0xFFF000;
+ 	memcpy(dst+2, &flipbits, 6);
+--- a/src/gl/rwgl3.h
++++ b/src/gl/rwgl3.h
+@@ -100,6 +100,9 @@
+ extern Shader *defaultShader, *defaultShader_noAT;
+ extern Shader *defaultShader_fullLight, *defaultShader_fullLight_noAT;
+ 
++#endif
++
++#if defined(RW_GL3) || defined(RW_NULL)
+ struct Im3DVertex
+ {
+ 	V3d     position;
+@@ -148,6 +151,9 @@
+ 	float getU(void) { return this->u; }
+ 	float getV(void) { return this->v; }
+ };
++#endif
++
++#ifdef RW_GL3
+ 
+ void setAttribPointers(AttribDesc *attribDescs, int32 numAttribs);
+ void disableAttribPointers(AttribDesc *attribDescs, int32 numAttribs);
+--- a/src/d3d/d3d.cpp
++++ b/src/d3d/d3d.cpp
+@@ -924,6 +924,8 @@
+ 	image->allocate();
+ 
+ 	if(pallength){
++        // Palette texels are byte indices. Only the palette entries have RGBA channels.
++        conv = conv_8_from_8;
+ 		out = image->palette;
+ 		in = (uint8*)natras->palette;
+ 		for(int32 i = 0; i < pallength; i++){
