@@ -59,3 +59,7 @@ With the local server running and Google Chrome installed, these commands exerci
 npm run check:browser -- http://127.0.0.1:8000/
 npm run check:browser -- http://127.0.0.1:8000/jit.html
 ```
+
+## Formatting
+
+Run `npm run format` to format the browser pages, JavaScript build tools and package configuration with Biome. Use `npm run format:check` for a read-only check.
