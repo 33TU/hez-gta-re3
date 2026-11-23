@@ -3,6 +3,7 @@
 #include "platform.h"
 #include "Game.h"
 #include "Frontend.h"
+#include "DMAudio.h"
 #include "Timer.h"
 #include "ControllerConfig.h"
 #include "PlayerPed.h"
@@ -80,11 +81,40 @@ void readGameMouseButtons(CMouseControllerState &state)
     state.WHEELDN = (buttons & 16) != 0;
 }
 
+static void restartGame()
+{
+    FrontEndMenuManager.UnloadTextures();
+    CPad::ResetCheats();
+    CPad::StopPadsShaking();
+    DMAudio.ChangeMusicMode(MUSICMODE_DISABLE);
+    CTimer::Stop();
+
+    if (FrontEndMenuManager.m_bWantToLoad) {
+        CGame::ShutDownForRestart();
+        CGame::InitialiseWhenRestarting();
+        FrontEndMenuManager.m_bWantToLoad = false;
+        FrontEndMenuManager.m_bWantToRestart = false;
+    } else {
+        CGame::ShutDown();
+        CTimer::Stop();
+        // Camera initialization uses this flag to distinguish a load from a fresh start.
+        FrontEndMenuManager.m_bWantToRestart = false;
+        if (!CGame::Initialise("DATA\\GTA3.DAT")) {
+            fprintf(stderr, "Could not start a new game\n");
+            exit(1);
+        }
+    }
+    FrontEndMenuManager.m_bGameNotLoaded = false;
+    FrontEndMenuManager.m_bFirstTime = false;
+}
+
 static int tick(int diagnostic, int dx, int dy)
 {
     mouseDX = dx;
     mouseDY = dy;
     RsEventHandler(rsIDLE,(void*)1);
+    if (FrontEndMenuManager.m_bWantToRestart)
+        restartGame();
     serviceGameAudio();
     static int frames;
     CPlayerPed *player=FindPlayerPed();
