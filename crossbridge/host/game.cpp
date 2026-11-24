@@ -152,13 +152,32 @@ static int tick(int diagnostic, int dx, int dy)
     return (RsGlobal.quit?0:1)|(cutscene?2:0)|(inCar?4:0)|(control?8:0)|(closest<36.0f?16:0);
 }
 static int key(int code,int down){
+    static const RsKeyCodes keypadDigits[] = {
+        rsPADINS, rsPADEND, rsPADDOWN, rsPADPGDN, rsPADLEFT,
+        rsPAD5, rsPADRIGHT, rsPADHOME, rsPADUP, rsPADPGUP
+    };
     RsKeyCodes k;
     switch(code){
     case 8:k=rsBACKSP;break;case 9:k=rsTAB;break;case 13:k=rsENTER;break;case 27:k=rsESC;break;case 37:k=rsLEFT;break;case 38:k=rsUP;break;
     case 39:k=rsRIGHT;break;case 40:k=rsDOWN;break;case 16:k=rsLSHIFT;break;case 17:k=rsLCTRL;break;
     case 20: k = rsCAPSLK; break;
+    case 33: k = rsPGUP; break;
+    case 34: k = rsPGDN; break;
+    case 35: k = rsEND; break;
+    case 36: k = rsHOME; break;
+    case 45: k = rsINS; break;
+    case 46: k = rsDEL; break;
+    case 106: k = rsTIMES; break;
     case 107: k = rsPLUS; break;
-    default: if(code<32 || code>90) return 0; k=(RsKeyCodes)code;break;
+    case 108: k = rsPADENTER; break;
+    case 109: k = rsMINUS; break;
+    case 110: k = rsPADDEL; break;
+    case 111: k = rsDIVIDE; break;
+    default:
+        if (code >= 96 && code <= 105) k = keypadDigits[code - 96];
+        else if (code >= 32 && code <= 90) k = (RsKeyCodes)code;
+        else return 0;
+        break;
     }
     RsKeyStatus event={(RwInt32)k};
     RsKeyboardEventHandler(down?rsKEYDOWN:rsKEYUP,&event);

@@ -9,6 +9,7 @@ package com.adobe.flascc {
     import flash.net.*;
     import flash.media.*;
     import flash.text.*;
+    import flash.ui.KeyLocation;
     import flash.utils.*;
 
     public class Console extends Sprite implements ISpecialFile {
@@ -323,6 +324,12 @@ package com.adobe.flascc {
         private function sendKey(code:int,down:Boolean):void {
             pressed[code]=down;if(started) callGame(keyFn,Vector.<int>([code,int(down)]));
         }
+        // Num Lock off sends navigation key codes with a keypad location.
+        // Normalize before recording the key so deactivation releases the same button.
+        private static const keypadNavigation:Object = {
+            45:96, 35:97, 40:98, 34:99, 37:100, 12:101, 39:102,
+            36:103, 38:104, 33:105, 13:108, 46:110
+        };
         private function keyboard(e:KeyboardEvent):void {
             var down:Boolean=e.type==KeyboardEvent.KEY_DOWN;
             if(e.keyCode==77) {
@@ -335,7 +342,10 @@ package com.adobe.flascc {
                 if(down) stage.displayState=StageDisplayState.NORMAL;
                 return;
             }
-            if(Boolean(pressed[e.keyCode])!=down) sendKey(e.keyCode,down);
+            var code:int = e.keyCode;
+            if (e.keyLocation == KeyLocation.NUM_PAD && keypadNavigation.hasOwnProperty(code))
+                code = keypadNavigation[code];
+            if(Boolean(pressed[code])!=down) sendKey(code,down);
         }
         private function agal(fragment:Boolean,ops:Array):ByteArray {
             var b:ByteArray=new ByteArray();b.endian="littleEndian";b.writeByte(0xa0);b.writeUnsignedInt(1);

@@ -54,6 +54,8 @@ The packer writes `crossbridge/out/game.bin`. The audio converter writes `crossb
 
 You can reuse `game.bin` and the entire `audio/` directory across builds by copying or symlinking them into `crossbridge/out/`. Git ignores this directory, which holds your private game data.
 
+When replacing a prepared audio pack, run the converter with a fresh output directory. It writes the chunks as it decodes each track and publishes `bank.bin` last. Switch to the new directory after conversion finishes to keep the previous pack playable if conversion is interrupted.
+
 ## Play
 
 Open the [AOT player](http://127.0.0.1:8000/) for normal play. It imports the runtime libraries and game code as ES modules from `compiled/manifest.json`. Keep the corresponding `.js` and `.log` files together. The AOT page permits WebAssembly and same-origin scripts in its content security policy. The [JIT player](http://127.0.0.1:8000/jit.html) compiles the same SWF in the browser. For a quick code change, run `npm run build:swf` and reload the JIT page. Run `npm run build:aot` to refresh the AOT modules. Changes to the browser host use `npm run build:web`.
