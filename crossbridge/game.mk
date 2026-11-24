@@ -6,8 +6,9 @@ gameflags := -O1 -emit-llvm -DNDEBUG -DMASTER -DLIBRW -DRW_NULL -D__STDC_LIMIT_M
 headers := -include host/compat.h -Ire3 -Ilibrw $(addprefix -I,$(include_dirs))
 .DELETE_ON_ERROR:
 
-# The host supplies its own IMG reader and stereo audio mixer.
-engine := $(filter-out obj/re3/src/core/CdStreamPosix.o obj/re3/src/audio/sampman_null.o,$(objects))
+# The host supplies its own IMG reader and stereo mixer and does not use native EAX effects.
+platform_objects := obj/re3/src/core/CdStreamPosix.o obj/re3/src/audio/sampman_null.o obj/re3/src/audio/eax/eax-util.o
+engine := $(filter-out $(platform_objects),$(objects))
 host := $(patsubst %.cpp,obj/%.o,$(wildcard host/*.cpp))
 revc-game.swf: $(engine) $(host) avm2/librw.a Console.abc
 	$(CXX) $(filter %.o %.a,$^) -symbol-abc=Console.abc -swf-size=640x480 -swf-version=18 -emit-swf -o $@

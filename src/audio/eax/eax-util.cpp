@@ -7,8 +7,6 @@
 *																								*
 ************************************************************************************************/
 
-#include "common.h"
-#if defined(AUDIO_OAL) || defined(AUDIO_MSS)
 #include "eax-util.h"
 #include <math.h>
 
@@ -706,5 +704,3 @@ EAXLISTENERPROPERTIES EAX30_MISC_PRESETS[] =
 	EAX30_PRESET_SMALLWATERROOM
 };
 
-
-#endif
