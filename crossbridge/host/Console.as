@@ -14,6 +14,8 @@ package com.adobe.flascc {
 
     public class Console extends Sprite implements ISpecialFile {
         private var ctx:Context3D, shader:Program3D, overlay:Program3D, bootFn:int, frameFn:int, keyFn:int;
+        private var maskedOverlay:Program3D, stencilAlphaTest:Boolean;
+        private const alphaRef:Vector.<Number>=new Vector.<Number>(4,true);
         private var audioRoot:String="audio/", audioReady:Boolean, bankPtr:int, bankBytes:int, mixFn:int;
         private var sound:Sound, outputChannel:SoundChannel, chunkLoads:Array=[];
         private var stopped:Boolean;
@@ -365,10 +367,21 @@ package com.adobe.flascc {
                 2,0x020f0001,0xff000000,2,0,1,0x27,0,1,2,0,0,
                 0,0x030f0000,0xe4000000,2,0,0]));
             overlay=ctx.createProgram();
-            overlay.upload(agal(false,[0x18,0x030f0000,0xe4000000,0,0xe4000000,1,
-                0,0x040f0000,0xe4000002,0,0,0,0,0x040f0001,0xe4000001,0,0,0]),
+            var screenVertex:ByteArray=agal(false,[0x18,0x030f0000,0xe4000000,0,0xe4000000,1,
+                0,0x040f0000,0xe4000002,0,0,0,0,0x040f0001,0xe4000001,0,0,0]);
+            overlay.upload(screenVertex,
                 agal(true,[0x28,0x020f0000,0xe4000000,4,0,0x10000005,
                 3,0x030f0000,0xe4000000,2,0xe4000001,4]));
+            // Discard transparent fragments before the droplet mask writes stencil.
+            maskedOverlay=ctx.createProgram();
+            screenVertex.position=0;
+            maskedOverlay.upload(screenVertex,agal(true,[
+                0x28,0x020f0000,0xe4000000,4,0,0x10000005, // tex ft0,v0,fs0
+                3,0x020f0000,0xe4000000,2,0xe4000001,4,    // mul ft0,ft0,v1
+                2,0x02010001,0xff000000,2,2,1,             // sub ft1.x,ft0.w,fc2.x
+                0x27,0,1,2,0,0,                            // kil ft1.x
+                0,0x030f0000,0xe4000000,2,0,0]));          // mov oc,ft0
+            stencilAlphaTest=false;
             ctx.setProgram(shader);
             var white:ByteArray=new ByteArray();white.writeUnsignedInt(0xffffffff);
             textureData[0]={data:white,w:1,h:1};
@@ -430,6 +443,27 @@ package com.adobe.flascc {
         private const blendModes:Array=[null,"zero","one","sourceColor","oneMinusSourceColor",
             "sourceAlpha","oneMinusSourceAlpha","destinationAlpha","oneMinusDestinationAlpha",
             "destinationColor","oneMinusDestinationColor","sourceAlpha"];
+        // Indexed by librw's StencilFunction and StencilOperation enums.
+        private const stencilFunctions:Array=["always","never","less","equal","lessEqual","greater",
+            "notEqual","greaterEqual","always"];
+        private const stencilActions:Array=["keep","keep","zero","set","incrementSaturate",
+            "decrementSaturate","invert","incrementWrap","decrementWrap"];
+        public function setStencil(compare:int,pass:int,depthFail:int,fail:int,ref:uint,
+                                   readMask:uint,writeMask:uint,cutoff:uint):void {
+            ctx.setStencilActions("frontAndBack",stencilFunctions[compare],stencilActions[pass],
+                stencilActions[depthFail],stencilActions[fail]);
+            ctx.setStencilReferenceValue(ref & 255,readMask & 255,writeMask & 255);
+            stencilAlphaTest=cutoff!=0;
+            if(stencilAlphaTest){
+                alphaRef[0]=cutoff/255;
+                ctx.setProgramConstantsFromVector("fragment",2,alphaRef,1);
+            }
+        }
+        public function resetStencil():void {
+            ctx.setStencilActions();
+            ctx.setStencilReferenceValue(0);
+            stencilAlphaTest=false;
+        }
         private function blend(flags:int):void {
             ctx.setBlendFactors(blendModes[(flags>>>4)&15] || "sourceAlpha",
                                 blendModes[(flags>>>8)&15] || "oneMinusSourceAlpha");
@@ -455,7 +489,7 @@ package com.adobe.flascc {
                 ib.uploadFromVector(indices,0,indices.length);
                 b=quads[key]={ib:ib,vb:ctx.createVertexBuffer(n,7)};
             }
-            ctx.setProgram(overlay);
+            ctx.setProgram(stencilAlphaTest?maskedOverlay:overlay);
             ctx.setProgramConstantsFromVector("vertex",0,screen,4);
             ctx.setDepthTest((flags&2)!=0,(flags&1)?"lessEqual":"always");
             blend(flags);
@@ -490,7 +524,7 @@ package com.adobe.flascc {
                 b.ib.uploadFromVector(scratch,0,nidx);
             }
             b.vb.uploadFromByteArray(CModule.ram,ptr,0,n);
-            ctx.setProgram(world?shader:overlay);
+            ctx.setProgram(world?shader:(stencilAlphaTest?maskedOverlay:overlay));
             if(world) constants(mapMatrix,0xffffffff,0);
             else ctx.setProgramConstantsFromVector("vertex",0,screen,4);
             ctx.setDepthTest((flags&2)!=0,(flags&1)?"lessEqual":"always");
