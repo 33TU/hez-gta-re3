@@ -12,6 +12,10 @@ Rendering is handled either by original RenderWare (D3D8)
 or the reimplementation [librw](https://github.com/aap/librw) (D3D9, OpenGL 2.1 or above, OpenGL ES 2.0 or above).\
 Audio is done with MSS (using dlls from original GTA) or OpenAL.
 
+## Vice City in the browser
+
+The CrossBridge port runs reVC on swf2es with your classic PC game files. [Build and play instructions](crossbridge/README.md)
+
 ## My fixes
 
 They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tree/master/#my-fixes) in the master branch readme.

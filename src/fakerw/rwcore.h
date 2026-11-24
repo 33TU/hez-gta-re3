@@ -14,8 +14,14 @@
  ***********************************************
  */
 
+#ifdef RW_NULL
+// Only the vertex storage and its accessors are needed by the null device.
+typedef rw::gl3::Im2DVertex RwIm2DVertex;
+typedef rw::gl3::Im3DVertex RwIm3DVertex;
+#else
 typedef rw::RWDEVICE::Im2DVertex RwIm2DVertex;
 typedef rw::RWDEVICE::Im3DVertex RwIm3DVertex;
+#endif
 typedef RwUInt16 RwImVertexIndex;
 
 enum RwIm3DTransformFlags

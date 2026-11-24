@@ -2518,7 +2518,7 @@ cSampleManager::SetStreamedVolumeAndPan(uint8 nVolume, uint8 nPan, bool8 nEffect
 }
 
 int32
-cSampleManager::GetStreamedFileLength(uint8 nStream)
+cSampleManager::GetStreamedFileLength(uint32 nStream)
 {
 	if ( m_bInitialised )
 		return nStreamLength[nStream];

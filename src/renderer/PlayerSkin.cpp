@@ -106,9 +106,14 @@ CPlayerSkin::GetSkinTexture(const char *texName)
 		sprintf(gString, "skins\\%s.bmp", texName);
 
 	if (RwImage *image = RtBMPImageRead(gString)) {
+#ifdef __AVM2__
+        raster=rw::Raster::createFromImage(image,rw::PLATFORM_D3D8);
+        if(!raster){ RwImageDestroy(image); return nil; }
+#else
 		RwImageFindRasterFormat(image, rwRASTERTYPETEXTURE, &width, &height, &depth, &format);
 		raster = RwRasterCreate(width, height, depth, format);
 		RwRasterSetFromImage(raster, image);
+#endif
 
 		tex = RwTextureCreate(raster);
 		RwTextureSetName(tex, texName);

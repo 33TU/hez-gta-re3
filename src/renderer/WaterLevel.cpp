@@ -573,14 +573,14 @@ CWaterLevel::TestVisibilityForFineWaterBlocks(const CVector &worldPos)
 {
 	static CVector2D tab[] =
 	{
-		{ 50.0f, 50.0f },
-		{ -50.0f, 50.0f },
-		{ -50.0f, -50.0f },
-		{ 50.0f, -50.0f },
-		{ 50.0f, 0.0f },
-		{ -50.0f, 0.0f },
-		{ 0.0f, -50.0f },
-		{ 0.0f, 50.0f },
+		CVector2D(50.0f, 50.0f),
+		CVector2D(-50.0f, 50.0f),
+		CVector2D(-50.0f, -50.0f),
+		CVector2D(50.0f, -50.0f),
+		CVector2D(50.0f, 0.0f),
+		CVector2D(-50.0f, 0.0f),
+		CVector2D(0.0f, -50.0f),
+		CVector2D(0.0f, 50.0f),
 	};
 
 	CEntity *entity;

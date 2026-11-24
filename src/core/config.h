@@ -281,7 +281,9 @@ enum Config {
 #define MORE_LANGUAGES		// Add more translations to the game
 #define COMPATIBLE_SAVES // this allows changing structs while keeping saves compatible, and keeps saves compatible between platforms
 #define FIX_INCOMPATIBLE_SAVES // try to fix incompatible saves, requires COMPATIBLE_SAVES
+#ifndef __AVM2__
 #define LOAD_INI_SETTINGS // as the name suggests. fundamental for CUSTOM_FRONTEND_OPTIONS
+#endif
 
 #define NO_MOVIES	// add option to disable intro videos
 
@@ -315,7 +317,7 @@ enum Config {
 #define DISABLE_VSYNC_ON_TEXTURE_CONVERSION // make texture conversion work faster by disabling vsync
 #define ANISOTROPIC_FILTERING	// set all textures to max anisotropic filtering
 //#define USE_TEXTURE_POOL
-#ifdef LIBRW
+#if defined(LIBRW) && !defined(RW_NULL)
 #define EXTENDED_COLOURFILTER		// more options for colour filter (replaces mblur)
 #define EXTENDED_PIPELINES		// custom render pipelines (includes Neo)
 #define SCREEN_DROPLETS			// neo water droplets
@@ -361,7 +363,6 @@ enum Config {
 //#	define PS2_MENU_USEALLPAGEICONS
 #else
 #	define MAP_ENHANCEMENTS			// Adding waypoint and better mouse support
-#	define GAMEPAD_MENU		// Add gamepad menu
 #	if defined(XINPUT) || defined(__SWITCH__)
 #		define PAD_VIBRATION		// only XInput and the Switch can shake the pad
 #	endif
@@ -370,9 +371,12 @@ enum Config {
 #define LEGACY_MENU_OPTIONS			// i.e. frame sync(vsync)
 #define MUCH_SHORTER_OUTRO_SCREEN
 // #define XBOX_MESSAGE_SCREEN			// Blue background, no "saved successfully press OK" screen etc.
+#ifndef __AVM2__
 #	define CUSTOM_FRONTEND_OPTIONS
+#endif
 
 #	ifdef CUSTOM_FRONTEND_OPTIONS
+#		define GAMEPAD_MENU		// This page is defined in MenuScreensCustom.cpp
 #		define GRAPHICS_MENU_OPTIONS // otherwise Display settings will be scrollable
 #		define NO_ISLAND_LOADING  // disable loadscreen between islands via loading all island data at once, consumes more memory and CPU
 #		define CUTSCENE_BORDERS_SWITCH

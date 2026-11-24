@@ -304,8 +304,8 @@ void _rwD3D8TexDictionaryEnableRasterFormatConversion(bool enable) { }
 RwBool rwNativeTextureHackRead(RwStream *stream, RwTexture **tex, RwInt32 size)
 {
 	*tex = Texture::streamReadNative(stream);
-#ifdef LIBRW
-	(*tex)->raster = rw::Raster::convertTexToCurrentPlatform((*tex)->raster);
+#if defined(LIBRW) && !defined(RW_NULL)
+	if(*tex) (*tex)->raster = rw::Raster::convertTexToCurrentPlatform((*tex)->raster);
 #endif
 	return *tex != nil;
 }
@@ -565,6 +565,9 @@ RwBool RwEngineInit(RwMemoryFunctions *memFuncs, RwUInt32 initFlags, RwUInt32 re
 }
 // TODO: this is platform dependent
 RwBool RwEngineOpen(RwEngineOpenParams *initParams) {
+#ifdef RW_NULL
+	return Engine::open(nil);
+#else
 	static EngineOpenParams openParams;
 #ifdef RW_D3D9
 	openParams.window = (HWND)initParams->displayID;
@@ -572,6 +575,7 @@ RwBool RwEngineOpen(RwEngineOpenParams *initParams) {
 	openParams = *(EngineOpenParams*)initParams->displayID;
 #endif
 	return Engine::open(&openParams);
+#endif
 }
 RwBool RwEngineStart(void) {
 	rw::d3d::isP8supported = false;
@@ -991,6 +995,7 @@ void RtQuatConvertToMatrix(const RtQuat * const qpQuat, RwMatrix * const mpMatri
 
 #include "rtcharse.h"
 
+#ifndef RW_NULL
 RwBool       RtCharsetOpen(void) { return Charset::open(); }
 void         RtCharsetClose(void) { return Charset::close(); }
 RtCharset   *RtCharsetPrint(RtCharset * charSet, const RwChar * string, RwInt32 x, RwInt32 y) { charSet->print(string, x, y, true); return charSet; }
@@ -1000,6 +1005,7 @@ RtCharset   *RtCharsetSetColors(RtCharset * charSet, const RwRGBA * foreGround, 
 RtCharset   *RtCharsetGetDesc(RtCharset * charset, RtCharsetDesc * desc) { *desc = charset->desc; return charset; }
 RtCharset   *RtCharsetCreate(const RwRGBA * foreGround, const RwRGBA * backGround) { return Charset::create(foreGround, backGround); }
 RwBool       RtCharsetDestroy(RtCharset * charSet) { charSet->destroy(); return true; }
+#endif
 
 
 

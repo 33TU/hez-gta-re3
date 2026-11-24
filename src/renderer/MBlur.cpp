@@ -36,6 +36,17 @@ static RwImVertexIndex Index[6] = { 0, 1, 2, 0, 2, 3 };
 #ifndef LIBRW
 extern "C" D3DCAPS8 _RwD3D8DeviceCaps;
 #endif
+// For positive raster sizes the original picks the power of two strictly above the size.
+static uint32
+BlurBufferSize(int32 size)
+{
+	int exponent;
+	if(size <= 0)
+		return 0;
+	frexp(size, &exponent);
+	return 1u << exponent;
+}
+
 RwBool
 CMBlur::MotionBlurOpen(RwCamera *cam)
 {
@@ -87,8 +98,8 @@ CMBlur::MotionBlurOpen(RwCamera *cam)
 		
 	if(BlurOn)
 	{
-		uint32 width  = Pow(2.0f, int32(log2(RwRasterGetWidth (RwCameraGetRaster(cam))))+1);
-		uint32 height = Pow(2.0f, int32(log2(RwRasterGetHeight(RwCameraGetRaster(cam))))+1);
+		uint32 width  = BlurBufferSize(RwRasterGetWidth(RwCameraGetRaster(cam)));
+		uint32 height = BlurBufferSize(RwRasterGetHeight(RwCameraGetRaster(cam)));
 		uint32 depth  = RwRasterGetDepth(RwCameraGetRaster(cam));
 		
 #ifndef LIBRW
@@ -278,8 +289,8 @@ CMBlur::CreateImmediateModeData(RwCamera *cam, RwRect *rect, RwIm2DVertex *verts
 			y2 -= HALFPX;
 		}
 
-		int32 width  = Pow(2.0f, int32(log2(RwRasterGetWidth (RwCameraGetRaster(cam))))+1);
-		int32 height = Pow(2.0f, int32(log2(RwRasterGetHeight(RwCameraGetRaster(cam))))+1);
+		int32 width  = BlurBufferSize(RwRasterGetWidth (RwCameraGetRaster(cam)));
+		int32 height = BlurBufferSize(RwRasterGetHeight(RwCameraGetRaster(cam)));
 		u1 = x1/width + u1Off;
 		v1 = y1/height + v1Off;
 		u2 = x2/width + u2Off;
@@ -708,8 +719,8 @@ CMBlur::OverlayRenderFx(RwCamera *cam, RwRaster *frontBuf)
 		case FXTYPE_BLOOD1:
 		case FXTYPE_BLOOD2: {
 			drawWaterDrops = true;
-			int32 width  = Pow(2.0f, int32(log2(RwRasterGetWidth (RwCameraGetRaster(cam))))+1);
-			int32 height = Pow(2.0f, int32(log2(RwRasterGetHeight(RwCameraGetRaster(cam))))+1);
+			int32 width  = BlurBufferSize(RwRasterGetWidth (RwCameraGetRaster(cam)));
+			int32 height = BlurBufferSize(RwRasterGetHeight(RwCameraGetRaster(cam)));
 
 			float u1Off = (fxRect[i].w - fxRect[i].x)/width;
 			float u2Off = u1Off - (fxRect[i].w - fxRect[i].x + 0.5f)*0.66f/width;

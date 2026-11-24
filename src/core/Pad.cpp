@@ -933,6 +933,13 @@ void CPad::UpdateMouse()
 		PCTempMouseControllerState.WHEELUP = 1;
 	else if ( state.lZ < 0 )
 		PCTempMouseControllerState.WHEELDN = 1;
+#elif defined(__AVM2__) && defined(RW_NULL)
+	extern void readGameMouse(float &, float &);
+	readGameMouse(x, y);
+	x *= signX;
+	y *= signy;
+#elif defined(RW_NULL)
+	return;
 #else
 	if ( !PSGLOBAL(cursorIsInWindow) )
 		return;
@@ -970,6 +977,10 @@ void CPad::UpdateMouse()
 // collected and starts collecting for the next
 void CPad::UpdateMouseForLogicalFrame()
 {
+#if defined(__AVM2__) && defined(RW_NULL)
+	extern void readGameMouseButtons(CMouseControllerState &);
+	readGameMouseButtons(PCTempMouseControllerState);
+#endif
 	OldMouseControllerState = NewMouseControllerState;
 	NewMouseControllerState = PCTempMouseControllerState;
 	PCTempMouseControllerState.x = 0.0f;
@@ -1743,7 +1754,7 @@ void CPad::UpdatePads(void)
 #ifdef XINPUT
 	GetPad(0)->AffectFromXinput(m_bMapPadOneToPadTwo ? 1 : 0);
 	GetPad(1)->AffectFromXinput(m_bMapPadOneToPadTwo ? 0 : 1);
-#else
+#elif !defined(RW_NULL)
 	CapturePad(0);
 #endif
 #ifdef DEBUG

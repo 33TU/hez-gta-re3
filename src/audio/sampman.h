@@ -246,7 +246,7 @@ public:
 	void  StopStreamedFile                                                     (uint8 nStream = 0);
 	int32 GetStreamedFilePosition                                              (uint8 nStream = 0);
 	void  SetStreamedVolumeAndPan(uint8 nVolume, uint8 nPan, bool8 nEffectFlag, uint8 nStream = 0);
-	int32 GetStreamedFileLength                                                (uint8 nStream = 0);
+	int32 GetStreamedFileLength                                                (uint32 nStream = 0);
 	bool8 IsStreamPlaying                                                      (uint8 nStream = 0);
 	void  SetStreamedFileLoopFlag                             (bool8 nLoopFlag, uint8 nStream = 0);
 #ifdef AUDIO_OAL
