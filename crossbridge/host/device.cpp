@@ -26,6 +26,25 @@ static void *getState(int32 state)
     return state >= 0 && state <= rw::GSALPHATESTREF ? renderState[state] : nil;
 }
 
+void applyGameStencil()
+{
+    static bool active;
+    if(!renderState[rw::STENCILENABLE]){
+        if(active)
+            inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).resetStencil();");
+        active = false;
+        return;
+    }
+    active = true;
+    uint32 cutoff = getState(rw::ALPHATESTFUNC) == (void*)rw::ALPHAGREATEREQUAL ?
+        (uint32)getState(rw::ALPHATESTREF) : 0;
+    inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).setStencil(%0,%1,%2,%3,%4,%5,%6,%7);"
+        : : "r"(getState(rw::STENCILFUNCTION)), "r"(getState(rw::STENCILPASS)),
+            "r"(getState(rw::STENCILZFAIL)), "r"(getState(rw::STENCILFAIL)),
+            "r"(getState(rw::STENCILFUNCTIONREF)), "r"(getState(rw::STENCILFUNCTIONMASK)),
+            "r"(getState(rw::STENCILFUNCTIONWRITEMASK)), "r"(cutoff));
+}
+
 static rw::Raster *cameraRaster(rw::Raster *raster)
 {
     if(raster->type != rw::Raster::CAMERA && raster->type != rw::Raster::ZBUFFER) return nil;
@@ -80,6 +99,7 @@ static void draw(rw::PrimitiveType prim, void *vertices, int32 count)
 
 void installMenuDevice()
 {
+    renderState[rw::STENCILFUNCTIONMASK] = renderState[rw::STENCILFUNCTIONWRITEMASK] = (void*)0xff;
     // Preserve the D3D8 palette until the Stage3D upload expands it to BGRA.
     rw::d3d::isP8supported = true;
     rw::Raster::registerPlugin(0, 0x464c5301, nil, releaseTexture, nil);

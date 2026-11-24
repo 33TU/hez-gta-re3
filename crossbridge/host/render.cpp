@@ -5,6 +5,7 @@
 #include <vector>
 
 void uploadRaster(rw::Raster *);
+void applyGameStencil();
 struct Vertex { rw::V3d position; rw::RGBA color; rw::TexCoords uv; };
 struct Part { int first, count; Part():first(0),count(0){} };
 struct Mesh { std::vector<Part> parts; };
@@ -106,6 +107,7 @@ static void skinVertices(rw::Atomic *a,rw::Skin *s,rw::HAnimHierarchy *h)
 }
 static int drawFlags()
 {
+    applyGameStencil();
     return (rw::GetRenderState(rw::ZTESTENABLE)?1:0) | (rw::GetRenderState(rw::ZWRITEENABLE)?2:0) |
            (rw::GetRenderState(rw::VERTEXALPHA)?4:0) | (rw::GetRenderState(rw::SRCBLEND)<<4) |
            (rw::GetRenderState(rw::DESTBLEND)<<8);
