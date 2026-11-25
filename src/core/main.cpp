@@ -781,43 +781,13 @@ LoadingIslandScreen(const char *levelName)
 	CFont::SetDropColor(CRGBA(0, 0, 0, 255));
 	CFont::SetDropShadowPosition(3);
 	CFont::SetColor(CRGBA(243, 237, 71, 255));
-#if !defined(PS2_HUD) && defined(GTA_PC)
-	CFont::SetScale(SCREEN_SCALE_X(1.2f), SCREEN_SCALE_Y(1.2f));
-#endif
-
-#ifdef PS2_HUD
-	#ifdef FIX_BUGS
-	CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(140.0f), TheText.Get("WELCOME"));
-	#else
-	CFont::PrintString(SCREEN_WIDTH - 20, SCREEN_HEIGHT - 140, TheText.Get("WELCOME"));
-	#endif
-#else
-	#ifdef FIX_BUGS
-	CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(110.0f), TheText.Get("WELCOME"));
-	#else
-	CFont::PrintString(SCREEN_WIDTH - 20, SCREEN_SCALE_FROM_BOTTOM(110.0f), TheText.Get("WELCOME"));
-	#endif
-#endif
+	CFont::SetScale(SCREEN_SCALE_X(CHud::Layout().welcomeScale), SCREEN_SCALE_Y(CHud::Layout().welcomeScale));
+	CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(CHud::Layout().welcomeY), TheText.Get("WELCOME"));
 	TextCopy(wstr, name);
 	TheText.UpperCase(wstr);
 	CFont::SetColor(CRGBA(243, 237, 71, 255));
-#if !defined(PS2_HUD) && defined(GTA_PC)
-	CFont::SetScale(SCREEN_SCALE_X(1.2f), SCREEN_SCALE_Y(1.2f));
-#endif
-
-#ifdef PS2_HUD
-	#ifdef FIX_BUGS
-		CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(110.0f), wstr);
-	#else
-		CFont::PrintString(SCREEN_WIDTH-20, SCREEN_HEIGHT - 110, wstr);
-	#endif
-#else
-	#ifdef FIX_BUGS
-		CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(80.0f), wstr);
-	#else
-		CFont::PrintString(SCREEN_WIDTH-20, SCREEN_SCALE_FROM_BOTTOM(80.0f), wstr);
-	#endif
-#endif
+	CFont::SetScale(SCREEN_SCALE_X(CHud::Layout().welcomeScale), SCREEN_SCALE_Y(CHud::Layout().welcomeScale));
+	CFont::PrintString(SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_FROM_BOTTOM(CHud::Layout().welcomeNameY), wstr);
 	CFont::DrawFonts();
 	DoRWStuffEndOfFrame();
 }
@@ -1821,6 +1791,7 @@ Idle(void *arg)
 			SnapshotMovingEntities();
 			CPointLights::InitPerLogicalFrame();
 			CGame::Process();
+			TheCamera.UpdateAverageSpeed();
 			CPointLights::EndLogicalFrame();
 			DMAudio.Service();
 		}
@@ -1933,9 +1904,11 @@ Idle(void *arg)
 		        TheCamera.SetMotionBlurAlpha(150);
 
 #ifdef SCREEN_DROPLETS
-		CPostFX::GetBackBuffer(Scene.camera);
-		ScreenDroplets::Process();
-		ScreenDroplets::Render();
+		if(CPostFX::Droplets == CPostFX::DROPLETS_XBOX){
+			CPostFX::GetBackBuffer(Scene.camera);
+			ScreenDroplets::Process();
+			ScreenDroplets::Render();
+		}
 #endif
 
 		tbStartTimer(0, "RenderMotionBlur");
