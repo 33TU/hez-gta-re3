@@ -58,6 +58,7 @@ package com.adobe.flascc
 			else
 				addEventListener(Event.ADDED_TO_STAGE, init);
 		}
+
 		private function init(e:Event = null):void
 		{
 			stage.scaleMode = StageScaleMode.SHOW_ALL;
@@ -104,6 +105,7 @@ package com.adobe.flascc
 				fetchPack();
 			}
 		}
+
 		private function fetchPack():void
 		{
 			loader = new URLLoader();
@@ -124,11 +126,13 @@ package com.adobe.flascc
 				});
 			loader.load(new URLRequest("game.bin"));
 		}
+
 		private function fail(s:String):void
 		{
 			trace("Game error", s);
 			stopGame(s, 1);
 		}
+
 		private function stopGame(message:String, code:int):void
 		{
 			stopped = true;
@@ -142,6 +146,7 @@ package com.adobe.flascc
 			if (capture && air)
 				air.exit(code);
 		}
+
 		private function callGame(fn:int, args:Vector.<int>):int
 		{
 			if (stopped)
@@ -158,6 +163,7 @@ package com.adobe.flascc
 				return 0;
 			}
 		}
+
 		private function beginPack(b:ByteArray):void
 		{
 			b.position = 0;
@@ -170,6 +176,7 @@ package com.adobe.flascc
 			total = b.readUnsignedInt();
 			pack = b;
 		}
+
 		private function unpack():void
 		{
 			var until:int = getTimer() + 20;
@@ -208,6 +215,7 @@ package com.adobe.flascc
 				fetchAudioBank();
 			}
 		}
+
 		private function fetchAudioBank():void
 		{
 			loader = new URLLoader();
@@ -246,6 +254,7 @@ package com.adobe.flascc
 				loader = null;
 				audioReady = true;
 			}
+
 			loader.addEventListener(IOErrorEvent.IO_ERROR, unavailable);
 			loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, unavailable);
 			status.text = "Reading game audio…";
@@ -257,6 +266,7 @@ package com.adobe.flascc
 			{
 				unavailable(err);
 			}
+
 		}
 		public function audioChunk(slot:int, name:String, block:int, dest:int, ready:int, size:int):void
 		{
@@ -283,10 +293,12 @@ package com.adobe.flascc
 				CModule.write32(ready, -1);
 				trace("Game audio", url, message);
 			}
+
 			function ioError(e:Event):void
 			{
 				failed(e.toString());
 			}
+
 			req.addEventListener(IOErrorEvent.IO_ERROR, ioError);
 			req.addEventListener(SecurityErrorEvent.SECURITY_ERROR, ioError);
 			req.addEventListener(Event.COMPLETE, function(e:Event):void
@@ -316,6 +328,7 @@ package com.adobe.flascc
 			catch (err:Error)
 			{
 				failed(err.message);
+
 			}
 		}
 		private function startAudio():void
@@ -353,6 +366,7 @@ package com.adobe.flascc
 				bankBytes = 0;
 			}
 		}
+
 		public function startGame(boot:int, tick:int, key:int, mix:int, resize:int):void
 		{
 			mixFn = mix;
@@ -420,6 +434,7 @@ package com.adobe.flascc
 				});
 			slot.requestContext3D("auto", "baseline");
 		}
+
 		private function setDisplay(w:int, h:int, fps:int):void
 		{
 			if (stopped || w < 32 || h < 32 || w > 2048 || h > 2048 || fps < 1 || fps > 1000)
@@ -440,6 +455,7 @@ package com.adobe.flascc
 			if (started)
 				callGame(resizeFn, Vector.<int>([w, h]));
 		}
+
 		private function resetMouse():void
 		{
 			mouseDX = mouseDY = 0;
@@ -447,6 +463,7 @@ package com.adobe.flascc
 			wheelQueue.length = 0;
 			wheelPulse = false;
 		}
+
 		private function pageMouseEvent(type:String, a:Number = 0, b:Number = 0):void
 		{
 			if (type == "lock")
@@ -480,6 +497,7 @@ package com.adobe.flascc
 				}
 			}
 		}
+
 		private function syncMouseLock():void
 		{
 			if (lastLocked != stage.mouseLock)
@@ -491,6 +509,7 @@ package com.adobe.flascc
 					acceptMotionAt = getTimer() + 80;
 			}
 		}
+
 		private function mouseMove(e:MouseEvent):void
 		{
 			if (pageMouse || !started)
@@ -502,6 +521,7 @@ package com.adobe.flascc
 				mouseDY += e.movementY;
 			}
 		}
+
 		private function mouseButton(e:MouseEvent):void
 		{
 			if (pageMouse)
@@ -550,11 +570,13 @@ package com.adobe.flascc
 			else
 				heldButtons &= ~bit;
 		}
+
 		private function mouseWheel(e:MouseEvent):void
 		{
 			if (!pageMouse && stage.mouseLock && started && e.delta && wheelQueue.length < 16)
 				wheelQueue.push(e.delta > 0 ? MOUSE_WHEEL_UP : MOUSE_WHEEL_DOWN);
 		}
+
 		public function sampleMouseButtons():int
 		{
 			var buttons:int = heldButtons | tappedButtons;
@@ -569,6 +591,7 @@ package com.adobe.flascc
 			}
 			return buttons;
 		}
+
 		private function tickGame():int
 		{
 			syncMouseLock();
@@ -579,6 +602,7 @@ package com.adobe.flascc
 			mouseDY -= frameArgs[2];
 			return callGame(frameFn, frameArgs);
 		}
+
 		private function toggleMouseCapture():void
 		{
 			try
@@ -601,12 +625,14 @@ package com.adobe.flascc
 				trace("Mouse capture", err.message);
 			}
 		}
+
 		private function sendKey(code:int, down:Boolean):void
 		{
 			pressed[code] = down;
 			if (started)
 				callGame(keyFn, Vector.<int>([code, int(down)]));
 		}
+
 		// Num Lock off sends navigation key codes with a keypad location.
 		// Normalize before recording the key so deactivation releases the same button.
 		private static const keypadNavigation:Object = {
@@ -637,6 +663,7 @@ package com.adobe.flascc
 			if (Boolean(pressed[code]) != down)
 				sendKey(code, down);
 		}
+
 		private function agal(fragment:Boolean, ops:Array):ByteArray
 		{
 			var b:ByteArray = new ByteArray();
@@ -650,6 +677,7 @@ package com.adobe.flascc
 			b.position = 0;
 			return b;
 		}
+
 		private function ready(e:Event):void
 		{
 			if (stopped)
@@ -693,6 +721,7 @@ package com.adobe.flascc
 				uploadMesh(mesh);
 			addEventListener(Event.ENTER_FRAME, draw);
 		}
+
 		private function draw(e:Event):void
 		{
 			try
@@ -772,12 +801,14 @@ package com.adobe.flascc
 				fail(err.getStackTrace() || err.toString());
 			}
 		}
+
 		private function uploadTexture(id:int):void
 		{
 			var t:Object = textureData[id], tex:Texture = ctx.createTexture(t.w, t.h, "bgra", false);
 			tex.uploadFromByteArray(t.data, 0);
 			gpu[id] = tex;
 		}
+
 		public function texture(id:int, ptr:int, w:int, h:int):void
 		{
 			var data:ByteArray = new ByteArray();
@@ -785,6 +816,7 @@ package com.adobe.flascc
 			textureData[id] = {data: data, w: w, h: h};
 			uploadTexture(id);
 		}
+
 		public function releaseTexture(id:int):void
 		{
 			if (gpu[id])
@@ -792,6 +824,7 @@ package com.adobe.flascc
 			delete gpu[id];
 			delete textureData[id];
 		}
+
 		// Draw state packed by render.cpp.
 		private static const DRAW_DEPTH_TEST:int = 1;
 		private static const DRAW_DEPTH_WRITE:int = 2;
@@ -820,17 +853,20 @@ package com.adobe.flascc
 				ctx.setProgramConstantsFromVector("fragment", 2, alphaRef, 1);
 			}
 		}
+
 		public function resetStencil():void
 		{
 			ctx.setStencilActions();
 			ctx.setStencilReferenceValue(0);
 			stencilAlphaTest = false;
 		}
+
 		private function blend(flags:int):void
 		{
 			ctx.setBlendFactors(blendModes[(flags >>> SRC_BLEND_SHIFT) & BLEND_FACTOR_MASK] || "sourceAlpha",
 					blendModes[(flags >>> DEST_BLEND_SHIFT) & BLEND_FACTOR_MASK] || "oneMinusSourceAlpha");
 		}
+
 		private function constants(m:Vector.<Number>, color:uint, threshold:Number, ambient:int = 0):void
 		{
 			ctx.setProgramConstantsFromVector("vertex", 0, m, 4);
@@ -838,6 +874,7 @@ package com.adobe.flascc
 			ctx.setProgramConstantsFromVector("fragment", 0, Vector.<Number>([threshold, 0, 0, 0,
 							(color & 255) / 255, ((color >>> 8) & 255) / 255, ((color >>> 16) & 255) / 255, (color >>> 24) / 255]), 2);
 		}
+
 		private var scratch:Vector.<uint> = new Vector.<uint>();
 		// Most screen draws (sky bands, character quads and the HUD) reuse
 		// an immutable triangle list for a given primitive type and size.
@@ -870,6 +907,7 @@ package com.adobe.flascc
 			ctx.setTextureAt(0, gpu[textureId]);
 			ctx.drawTriangles(b.ib);
 		}
+
 		public function immediate(world:int, kind:int, ptr:int, n:int, indices:int, count:int, id:int, flags:int):void
 		{
 			if (!world && !indices)
@@ -923,6 +961,7 @@ package com.adobe.flascc
 			ctx.setTextureAt(0, gpu[id]);
 			ctx.drawTriangles(b.ib, 0, int(nidx / 3));
 		}
+
 		private function uploadMesh(m:Object):void
 		{
 			m.vb = ctx.createVertexBuffer(m.n, 6);
@@ -930,6 +969,7 @@ package com.adobe.flascc
 			m.ib = ctx.createIndexBuffer(m.count);
 			m.ib.uploadFromByteArray(m.indices, 0, 0, m.count);
 		}
+
 		public function mesh(id:int, ptr:int, n:int, indices:int, count:int):void
 		{
 			var data:ByteArray = new ByteArray(), ix:ByteArray = new ByteArray();
@@ -938,11 +978,13 @@ package com.adobe.flascc
 			var m:Object = geometry[id] = {data: data, indices: ix, n: n, count: count};
 			uploadMesh(m);
 		}
+
 		public function deform(id:int, ptr:int):void
 		{
 			var m:Object = geometry[id];
 			m.vb.uploadFromByteArray(CModule.ram, ptr, 0, m.n);
 		}
+
 		public function forget(id:int):void
 		{
 			var m:Object = geometry[id];
@@ -953,11 +995,13 @@ package com.adobe.flascc
 				delete geometry[id];
 			}
 		}
+
 		public function objectMatrix(ptr:int):void
 		{
 			for (var i:int = 0; i < 16; i++)
 				mapMatrix[i] = CModule.readFloat(ptr + 4 * i);
 		}
+
 		public function material(id:int, tex:int, first:int, tris:int, color:uint, flags:int, ambient:int):void
 		{
 			var b:Object = geometry[id];
@@ -971,6 +1015,7 @@ package com.adobe.flascc
 			ctx.setTextureAt(0, gpu[tex]);
 			ctx.drawTriangles(b.ib, first, tris);
 		}
+
 		private function save(n:int):void
 		{
 			var bmp:BitmapData = new BitmapData(renderWidth, renderHeight, false, 0);
@@ -983,26 +1028,32 @@ package com.adobe.flascc
 			stream.close();
 			bmp.dispose();
 		}
+
 		public function write(fd:int, p:int, n:int, err:int):int
 		{
 			trace(CModule.readString(p, n));
 			return n;
 		}
+
 		public function read(fd:int, p:int, n:int, err:int):int
 		{
 			return 0;
 		}
+
 		public function fcntl(fd:int, cmd:int, data:int, err:int):int
 		{
 			return 0;
 		}
+
 		public function ioctl(fd:int, cmd:int, data:int, err:int):int
 		{
 			return 0;
 		}
+
 		public function exit(code:int):Boolean
 		{
 			return false;
 		}
+
 	}
 }
