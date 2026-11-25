@@ -12,7 +12,7 @@ package com.adobe.flascc
 	import flash.text.*;
 	import flash.utils.*;
 
-	public class Console extends Sprite implements ISpecialFile
+	public final class Console extends Sprite implements ISpecialFile
 	{
 		private var ctx:Context3D, shader:Program3D, overlay:Program3D, bootFn:int, frameFn:int, keyFn:int;
 		private var audioRoot:String = "audio/", audioReady:Boolean, bankPtr:int, bankBytes:int, mixFn:int;
@@ -39,7 +39,10 @@ package com.adobe.flascc
 		private var air:Object, capture:Boolean, pack:ByteArray, loader:URLLoader, total:uint, done:uint;
 		private var dirs:Object = {"/": true}, started:Boolean, mounted:Boolean, frame:int, controlFrames:int, drivingFrames:int;
 		private var status:TextField = new TextField(), pressed:Object = {};
-		private var gpu:Object = {}, textureData:Object = {}, geometry:Object = {}, quads:Object = {};
+		private var gpu:Object = {}; // Texture by raster ID
+		private const textureData:Object = {}; // TextureData by raster ID
+		private const geometry:Object = {}; // MeshData by geometry ID
+		private var quads:Object = {}; // PrimitiveBuffers by layout and size
 		private const screen:Vector.<Number> = Vector.<Number>([2 / 640, 0, 0, -1, 0, -2 / 480, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1]);
 		private var renderWidth:int = 640, renderHeight:int = 480, resizeFn:int;
 		private var mapMatrix:Vector.<Number> = new Vector.<Number>(16, true);
@@ -712,13 +715,13 @@ package com.adobe.flascc
 			{
 				var white:ByteArray = new ByteArray();
 				white.writeUnsignedInt(0xffffffff);
-				textureData[0] = {data: white, w: 1, h: 1};
+				textureData[0] = new TextureData(white, 1, 1);
 			}
 			gpu = {};
 			quads = {};
 			for (var k:String in textureData)
 				uploadTexture(int(k));
-			for each (var mesh:Object in geometry)
+			for each (var mesh:MeshData in geometry)
 				uploadMesh(mesh);
 			addEventListener(Event.ENTER_FRAME, draw);
 		}
@@ -827,25 +830,28 @@ package com.adobe.flascc
 
 		private function uploadTexture(id:int):void
 		{
-			var t:Object = textureData[id], tex:Texture = ctx.createTexture(t.w, t.h, "bgra", false);
-			tex.uploadFromByteArray(t.data, 0);
+			var source:TextureData = textureData[id];
+			var tex:Texture = ctx.createTexture(source.width, source.height, "bgra", false);
+			tex.uploadFromByteArray(source.pixels, 0);
 			gpu[id] = tex;
 		}
 
 		public function texture(id:int, ptr:int, w:int, h:int):void
 		{
 			var data:ByteArray = copyUploadBytes(ptr, w * h * 4);
-			textureData[id] = {data: data, w: w, h: h};
+			textureData[id] = new TextureData(data, w, h);
 			uploadTexture(id);
 		}
 
 		public function releaseTexture(id:int):void
 		{
-			if (gpu[id])
-				gpu[id].dispose();
+			var tex:Texture = gpu[id];
+			if (tex)
+				tex.dispose();
 			delete gpu[id];
-			if (textureData[id])
-				recycleUploadBytes(textureData[id].data);
+			var source:TextureData = textureData[id];
+			if (source)
+				recycleUploadBytes(source.pixels);
 			delete textureData[id];
 		}
 
@@ -886,8 +892,9 @@ package com.adobe.flascc
 		// an immutable triangle list for a given primitive type and size.
 		private function screenPrimitive(kind:int, ptr:int, n:int, textureId:int, flags:int):void
 		{
-			var key:String = "screen/" + kind + "/" + n, b:Object = quads[key];
-			if (!b)
+			var key:String = "screen/" + kind + "/" + n;
+			var buffers:PrimitiveBuffers = quads[key];
+			if (!buffers)
 			{
 				indexScratch.length = 0;
 				for (var i:int = 0; i < n; i++)
@@ -899,19 +906,20 @@ package com.adobe.flascc
 				}
 				var ib:IndexBuffer3D = ctx.createIndexBuffer(indexScratch.length);
 				ib.uploadFromVector(indexScratch, 0, indexScratch.length);
-				b = quads[key] = {ib: ib, vb: ctx.createVertexBuffer(n, 7)};
+				buffers = new PrimitiveBuffers(ib, ctx.createVertexBuffer(n, 7));
+				quads[key] = buffers;
 			}
 			ctx.setProgram(overlay);
 			ctx.setProgramConstantsFromVector("vertex", 0, screen, 4);
 			ctx.setDepthTest((flags & DRAW_DEPTH_WRITE) != 0, (flags & DRAW_DEPTH_TEST) ? "lessEqual" : "always");
 			blend(flags);
-			var vb:VertexBuffer3D = b.vb;
+			var vb:VertexBuffer3D = buffers.vertexBuffer;
 			vb.uploadFromByteArray(CModule.ram, ptr, 0, n);
 			ctx.setVertexBufferAt(0, vb, 0, "float3");
 			ctx.setVertexBufferAt(1, vb, 4, "bytes4");
 			ctx.setVertexBufferAt(2, vb, 5, "float2");
 			ctx.setTextureAt(0, gpu[textureId]);
-			ctx.drawTriangles(b.ib);
+			ctx.drawTriangles(buffers.indexBuffer);
 		}
 
 		public function immediate(world:int, kind:int, ptr:int, n:int, indices:int, count:int, id:int, flags:int):void
@@ -926,12 +934,17 @@ package com.adobe.flascc
 			var capacity:int = 4;
 			while (capacity < n || capacity < nidx)
 				capacity *= 2;
-			var key:String = stride + "/" + capacity, b:Object = quads[key];
-			if (!b)
-				b = quads[key] = {ib: ctx.createIndexBuffer(capacity), vb: ctx.createVertexBuffer(capacity, stride)};
+			var key:String = stride + "/" + capacity;
+			var buffers:PrimitiveBuffers = quads[key];
+			if (!buffers)
+			{
+				var ib:IndexBuffer3D = ctx.createIndexBuffer(capacity);
+				buffers = new PrimitiveBuffers(ib, ctx.createVertexBuffer(capacity, stride));
+				quads[key] = buffers;
+			}
 			if (indices && kind == 3)
 			{
-				b.ib.uploadFromByteArray(CModule.ram, indices, 0, count);
+				buffers.indexBuffer.uploadFromByteArray(CModule.ram, indices, 0, count);
 			}
 			else
 			{
@@ -955,9 +968,9 @@ package com.adobe.flascc
 					older = prev;
 					prev = vertex;
 				}
-				b.ib.uploadFromVector(indexScratch, 0, nidx);
+				buffers.indexBuffer.uploadFromVector(indexScratch, 0, nidx);
 			}
-			b.vb.uploadFromByteArray(CModule.ram, ptr, 0, n);
+			buffers.vertexBuffer.uploadFromByteArray(CModule.ram, ptr, 0, n);
 			ctx.setProgram(world ? shader : overlay);
 			if (world)
 				constants(mapMatrix, 0xffffffff, 0);
@@ -965,44 +978,45 @@ package com.adobe.flascc
 				ctx.setProgramConstantsFromVector("vertex", 0, screen, 4);
 			ctx.setDepthTest((flags & DRAW_DEPTH_WRITE) != 0, (flags & DRAW_DEPTH_TEST) ? "lessEqual" : "always");
 			blend(flags);
-			ctx.setVertexBufferAt(0, b.vb, 0, "float3");
-			ctx.setVertexBufferAt(1, b.vb, world ? 3 : 4, "bytes4");
-			ctx.setVertexBufferAt(2, b.vb, world ? 4 : 5, "float2");
+			ctx.setVertexBufferAt(0, buffers.vertexBuffer, 0, "float3");
+			ctx.setVertexBufferAt(1, buffers.vertexBuffer, world ? 3 : 4, "bytes4");
+			ctx.setVertexBufferAt(2, buffers.vertexBuffer, world ? 4 : 5, "float2");
 			ctx.setTextureAt(0, gpu[id]);
-			ctx.drawTriangles(b.ib, 0, int(nidx / 3));
+			ctx.drawTriangles(buffers.indexBuffer, 0, int(nidx / 3));
 		}
 
-		private function uploadMesh(m:Object):void
+		private function uploadMesh(meshData:MeshData):void
 		{
-			m.vb = ctx.createVertexBuffer(m.n, 6);
-			m.vb.uploadFromByteArray(m.data, 0, 0, m.n);
-			m.ib = ctx.createIndexBuffer(m.count);
-			m.ib.uploadFromByteArray(m.indices, 0, 0, m.count);
+			meshData.vertexBuffer = ctx.createVertexBuffer(meshData.vertexCount, 6);
+			meshData.vertexBuffer.uploadFromByteArray(meshData.vertices, 0, 0, meshData.vertexCount);
+			meshData.indexBuffer = ctx.createIndexBuffer(meshData.indexCount);
+			meshData.indexBuffer.uploadFromByteArray(meshData.indices, 0, 0, meshData.indexCount);
 		}
 
 		public function mesh(id:int, ptr:int, n:int, indices:int, count:int):void
 		{
-			var data:ByteArray = copyUploadBytes(ptr, 24 * n);
-			var ix:ByteArray = copyUploadBytes(indices, count * 2);
-			var m:Object = geometry[id] = {data: data, indices: ix, n: n, count: count};
-			uploadMesh(m);
+			var vertices:ByteArray = copyUploadBytes(ptr, 24 * n);
+			var indexData:ByteArray = copyUploadBytes(indices, count * 2);
+			var meshData:MeshData = new MeshData(vertices, indexData, n, count);
+			geometry[id] = meshData;
+			uploadMesh(meshData);
 		}
 
 		public function deform(id:int, ptr:int):void
 		{
-			var m:Object = geometry[id];
-			m.vb.uploadFromByteArray(CModule.ram, ptr, 0, m.n);
+			var meshData:MeshData = geometry[id];
+			meshData.vertexBuffer.uploadFromByteArray(CModule.ram, ptr, 0, meshData.vertexCount);
 		}
 
 		public function forget(id:int):void
 		{
-			var m:Object = geometry[id];
-			if (m)
+			var meshData:MeshData = geometry[id];
+			if (meshData)
 			{
-				m.vb.dispose();
-				m.ib.dispose();
-				recycleUploadBytes(m.data);
-				recycleUploadBytes(m.indices);
+				meshData.vertexBuffer.dispose();
+				meshData.indexBuffer.dispose();
+				recycleUploadBytes(meshData.vertices);
+				recycleUploadBytes(meshData.indices);
 				delete geometry[id];
 			}
 		}
@@ -1015,16 +1029,16 @@ package com.adobe.flascc
 
 		public function material(id:int, tex:int, first:int, tris:int, color:uint, flags:int, ambient:int):void
 		{
-			var b:Object = geometry[id];
+			var meshData:MeshData = geometry[id];
 			ctx.setProgram(shader);
 			constants(mapMatrix, color, (flags & DRAW_VERTEX_ALPHA) ? 0.02 : 0.4, ambient);
 			ctx.setDepthTest((flags & DRAW_DEPTH_WRITE) != 0, (flags & DRAW_DEPTH_TEST) ? "lessEqual" : "always");
 			blend(flags);
-			ctx.setVertexBufferAt(0, b.vb, 0, "float3");
-			ctx.setVertexBufferAt(1, b.vb, 3, "bytes4");
-			ctx.setVertexBufferAt(2, b.vb, 4, "float2");
+			ctx.setVertexBufferAt(0, meshData.vertexBuffer, 0, "float3");
+			ctx.setVertexBufferAt(1, meshData.vertexBuffer, 3, "bytes4");
+			ctx.setVertexBufferAt(2, meshData.vertexBuffer, 4, "float2");
 			ctx.setTextureAt(0, gpu[tex]);
-			ctx.drawTriangles(b.ib, first, tris);
+			ctx.drawTriangles(meshData.indexBuffer, first, tris);
 		}
 
 		private const captureBytes:ByteArray = new ByteArray();
@@ -1067,6 +1081,53 @@ package com.adobe.flascc
 		public function exit(code:int):Boolean
 		{
 			return false;
+		}
+
+	}
+
+	internal final class TextureData
+	{
+		public var pixels:ByteArray;
+		public var width:int;
+		public var height:int;
+
+		public function TextureData(pixels:ByteArray, width:int, height:int)
+		{
+			this.pixels = pixels;
+			this.width = width;
+			this.height = height;
+		}
+
+	}
+
+	internal final class MeshData
+	{
+		public var vertices:ByteArray;
+		public var indices:ByteArray;
+		public var vertexCount:int;
+		public var indexCount:int;
+		public var vertexBuffer:VertexBuffer3D;
+		public var indexBuffer:IndexBuffer3D;
+
+		public function MeshData(vertices:ByteArray, indices:ByteArray, vertexCount:int, indexCount:int)
+		{
+			this.vertices = vertices;
+			this.indices = indices;
+			this.vertexCount = vertexCount;
+			this.indexCount = indexCount;
+		}
+
+	}
+
+	internal final class PrimitiveBuffers
+	{
+		public var indexBuffer:IndexBuffer3D;
+		public var vertexBuffer:VertexBuffer3D;
+
+		public function PrimitiveBuffers(indexBuffer:IndexBuffer3D, vertexBuffer:VertexBuffer3D)
+		{
+			this.indexBuffer = indexBuffer;
+			this.vertexBuffer = vertexBuffer;
 		}
 
 	}
