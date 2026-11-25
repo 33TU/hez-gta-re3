@@ -5,6 +5,7 @@
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "as3:format": "node tools/as3-format.js",
     "crossbridge": "node tools/crossbridge.js",
     "build:swf": "node crossbridge/build.mjs",
     "start": "python3 -m http.server --bind 127.0.0.1 --directory crossbridge/out",
