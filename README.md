@@ -1,11 +1,11 @@
-<img src="https://github.com/hezkore/hez-gta-re3/blob/miami/res/images/logo_1024.png?raw=true" alt="reVC logo" width="200">
+<img src="res/images/logo_1024.png" alt="reVC logo" width="200">
 
 ## Intro
 
 The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
 This is my fork of the last version of it I had, with my own fixes on top.
 
-In here you'll find the fully reversed source code for GTA III ([master](https://github.com/hezkore/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/hezkore/hez-gta-re3/tree/miami/) branch).
+In here you'll find the fully reversed source code for GTA III ([master](https://github.com/33TU/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/33TU/hez-gta-re3/tree/miami/) branch).
 
 It builds and runs on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
 Rendering is handled either by original RenderWare (D3D8)
@@ -18,20 +18,20 @@ The CrossBridge port runs reVC on swf2es with your classic PC game files. [Build
 
 ## My fixes
 
-They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tree/master/#my-fixes) in the master branch readme.
+They are in both games. See [My fixes](https://github.com/33TU/hez-gta-re3/blob/master/README.md#my-fixes) in the master branch readme.
 
 ## Installation
 
 - You **must** own the games. re3 needs [a copy of GTA III](https://store.steampowered.com/app/12100/Grand_Theft_Auto_III/), reVC needs [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
-- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has these zips:
+- Build from source or check [this fork’s releases](https://github.com/33TU/hez-gta-re3/releases) for nightly archives.
   - `re3-windows-amd64-d3d9.zip` and `re3-linux-amd64-opengl.zip` for GTA III
   - `reVC-windows-amd64-d3d9.zip` and `reVC-linux-amd64-opengl.zip` for GTA Vice City
-  - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64-opengl.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/hezkore/hez-gta-re3/tree/lcs)
+  - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64-opengl.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/33TU/hez-gta-re3/tree/lcs)
 - The Windows builds use Direct3D 9, and the Linux builds use OpenGL. Only the Windows builds play the intro videos.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 - Start the binary with `-loadsave 1` to skip the intro and menus and load save slot 1 straight away, and with `-cheat thugstools` to enter a cheat as soon as you can play. `-cheat` can be given several times. `-spawncar cheetah` puts you in that car on the nearest road, and `-teleport X,Y,Z` puts you at those coordinates, or on the ground with only X and Y.
 
-A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.
+The nightly workflow checks for branch updates at midnight UTC and keeps the ten newest nightlies.
 
 ## Screenshots
 
@@ -75,7 +75,7 @@ Some of them can be toggled at runtime, some cannot.
 The following things would be nice to have/do:
 
 * Improve performance on lower end devices, especially the OpenGL layer on the Raspberry Pi (if you have experience with this, please get in touch)
-* [PS2 port](https://github.com/GTAmodding/re3/wiki/PS2-port)
+* PS2 port
 * Xbox port (not quite as important)
 * reverse remaining unused/debug functions
 * compare CodeWarrior build with original binary for more accurate code (very tedious)
@@ -94,11 +94,11 @@ Sorry for the inconvenience.
 
 When using premake, you may want to point GTA_VC_RE_DIR environment variable to GTA Vice City root folder if you want the executable to be moved there via post-build script.
 
-Clone the repository with `git clone --recursive -b miami https://github.com/GTAmodding/re3.git reVC`. Then `cd reVC` into the cloned repository.
+Clone the repository with `git clone --recursive -b miami https://github.com/33TU/hez-gta-re3.git reVC`. Then `cd reVC` into the cloned repository.
 
 <details><summary>Linux Premake</summary>
 
-For Linux using premake, proceed: [Building on Linux](https://github.com/GTAmodding/re3/wiki/Building-on-Linux)
+The [nightly workflow](https://github.com/33TU/hez-gta-re3/blob/master/.github/workflows/nightly.yml) lists the Linux dependencies and Premake build commands for reVC.
 
 </details>
 
@@ -116,13 +116,13 @@ conan build .. -if build -bf build -pf package
 
 <details><summary>MacOS Premake</summary>
 
-For MacOS using premake, proceed: [Building on MacOS](https://github.com/GTAmodding/re3/wiki/Building-on-MacOS)
+See the macOS build configurations in [premake5.lua](premake5.lua).
 
 </details>
 
 <details><summary>FreeBSD</summary>
 
-For FreeBSD using premake, proceed: [Building on FreeBSD](https://github.com/GTAmodding/re3/wiki/Building-on-FreeBSD)
+See the FreeBSD build configurations in [premake5.lua](premake5.lua).
 
 </details>
 
@@ -134,12 +134,12 @@ Assuming you have Visual Studio 2015/2017/2019:
     
 Microsoft recently discontinued its downloads of the DX9 SDK. You can download an archived version here: https://archive.org/details/dxsdk_jun10
 
-**If you choose OpenAL on Windows** You must read [Running OpenAL build on Windows](https://github.com/GTAmodding/re3/wiki/Running-OpenAL-build-on-Windows).
+**If you choose OpenAL on Windows**, place `OpenAL32.dll` and `libmpg123-0.dll` next to `reVC.exe`. Use the DLLs for your build architecture from [OpenAL](vendor/openal-soft/dist) and [mpg123](vendor/mpg123/dist).
 </details>
 
 > :information_source: premake has an `--with-lto` option if you want the project to be compiled with Link Time Optimization.
 
-> :information_source: There are various settings in [config.h](https://github.com/GTAmodding/re3/tree/miami/src/core/config.h), you may want to take a look there.
+> :information_source: There are various settings in [config.h](src/core/config.h), you may want to take a look there.
 
 > :information_source: reVC uses completely homebrew RenderWare-replacement rendering engine; [librw](https://github.com/aap/librw/). librw comes as submodule of re3, but you also can use LIBRW enviorenment variable to specify path to your own librw.
 
@@ -160,7 +160,7 @@ We accept only these kinds of PRs;
 - Translation fixes, for languages original game supported
 - Code that increase maintainability  
 
-We have a [Coding Style](https://github.com/GTAmodding/re3/blob/master/CODING_STYLE.md) document that isn't followed or enforced very well.
+We have a [Coding Style](CODING_STYLE.md) document that isn't followed or enforced very well.
 
 Do not use features from C++11 or later.
 
