@@ -123,12 +123,16 @@ makeMesh(rw::Geometry *g, Mesh &mesh)
 	           : "r"(g), "r"(&v[0]), "r"(g->numVertices), "r"(&indices[0]), "r"(at));
 }
 
+// deform uploads synchronously, so the next skinned draw can reuse both vectors.
+static std::vector<rw::Matrix> skinBones;
+static std::vector<Vertex> skinVerts;
+
 static void
 skinVertices(rw::Atomic *a, rw::Skin *s, rw::HAnimHierarchy *h)
 {
 	rw::Geometry *g = a->geometry;
 	rw::Matrix inv, tmp;
-	std::vector<rw::Matrix> bones(s->numBones);
+	skinBones.resize(s->numBones);
 	rw::Matrix::invert(&inv, a->getFrame()->getLTM());
 	for(int i = 0; i < s->numBones; i++) {
 		rw::Matrix bind = ((rw::Matrix *)s->inverseMatrices)[i];
@@ -137,26 +141,25 @@ skinVertices(rw::Atomic *a, rw::Skin *s, rw::HAnimHierarchy *h)
 			tmp = h->matrices[i];
 		else
 			rw::Matrix::mult(&tmp, &h->matrices[i], &inv);
-		rw::Matrix::mult(&bones[i], &bind, &tmp);
+		rw::Matrix::mult(&skinBones[i], &bind, &tmp);
 	}
-	std::vector<Vertex> v;
-	vertices(g, v);
+	vertices(g, skinVerts);
 	for(int i = 0; i < g->numVertices; i++) {
 		CVector out(0, 0, 0);
 		for(int j = 0; j < s->numWeights; j++) {
 			float weight = s->weights[i * 4 + j];
 			if(!weight)
 				continue;
-			const rw::Matrix &b = bones[s->indices[i * 4 + j]];
-			rw::V3d p = v[i].position;
+			const rw::Matrix &b = skinBones[s->indices[i * 4 + j]];
+			rw::V3d p = skinVerts[i].position;
 			out += (CVector(b.right) * p.x + CVector(b.up) * p.y + CVector(b.at) * p.z + CVector(b.pos)) *
 			       weight;
 		}
-		v[i].position = out;
+		skinVerts[i].position = out;
 	}
 	inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).deform(%0,%1);"
 	           :
-	           : "r"(g), "r"(&v[0]));
+	           : "r"(g), "r"(&skinVerts[0]));
 }
 
 // Packed draw state passed to Console.as.
