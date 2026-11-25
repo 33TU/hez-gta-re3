@@ -3,16 +3,22 @@
 #include <AS3/AS3.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <set>
 
 // The menu submits unindexed screen-space triangle lists and fans through librw.
 static void *renderState[rw::GSALPHATESTREF + 1];
-static std::set<rw::Raster *> uploaded;
+static int32 rasterUploadOffset;
 
 static void *
-releaseTexture(void *object, int32, int32)
+initRasterUpload(void *object, int32 offset, int32)
 {
-	if(uploaded.erase((rw::Raster *)object))
+	*PLUGINOFFSET(bool, object, offset) = false;
+	return object;
+}
+
+static void *
+releaseTexture(void *object, int32 offset, int32)
+{
+	if(*PLUGINOFFSET(bool, object, offset))
 		inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).releaseTexture(%0);"
 		           :
 		           : "r"(object));
@@ -58,7 +64,7 @@ video(rw::DeviceReq req, void *out, int32 arg)
 void
 uploadRaster(rw::Raster *raster)
 {
-	if(raster && uploaded.insert(raster).second) {
+	if(raster && !*PLUGINOFFSET(bool, raster, rasterUploadOffset)) {
 		rw::Image *image = raster->toImage();
 		if(!image) {
 			fprintf(stderr, "Cannot decode menu raster\n");
@@ -76,6 +82,7 @@ uploadRaster(rw::Raster *raster)
 		inline_as3("import com.adobe.flascc.CModule; Object(CModule.vfs.console).texture(%0,%1,%2,%3);"
 		           :
 		           : "r"(raster), "r"(image->pixels), "r"(image->width), "r"(image->height));
+		*PLUGINOFFSET(bool, raster, rasterUploadOffset) = true;
 		image->destroy();
 	}
 }
@@ -101,7 +108,7 @@ installMenuDevice()
 {
 	// Preserve the D3D8 palette until the Stage3D upload expands it to BGRA.
 	rw::d3d::isP8supported = true;
-	rw::Raster::registerPlugin(0, 0x464c5301, nil, releaseTexture, nil);
+	rasterUploadOffset = rw::Raster::registerPlugin(sizeof(bool), 0x464c5301, initRasterUpload, releaseTexture, nil);
 	rw::Device &dev = rw::engine->device;
 	dev.setRenderState = setState;
 	dev.getRenderState = getState;
