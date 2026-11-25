@@ -266,8 +266,8 @@ package com.adobe.flascc
 			{
 				unavailable(err);
 			}
-
 		}
+
 		public function audioChunk(slot:int, name:String, block:int, dest:int, ready:int, size:int):void
 		{
 			var req:URLLoader = new URLLoader();
@@ -328,9 +328,9 @@ package com.adobe.flascc
 			catch (err:Error)
 			{
 				failed(err.message);
-
 			}
 		}
+
 		private function startAudio():void
 		{
 			sound = new Sound();
