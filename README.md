@@ -1,4 +1,4 @@
-<img src="https://github.com/hezkore/hez-gta-re3/blob/master/res/images/logo_1024.png?raw=true" alt="re3 logo" width="200">
+<img src="res/images/logo_1024.png" alt="re3 logo" width="200">
 
 ## Browser port
 
@@ -11,7 +11,7 @@ Bring your own installation of classic GTA III for PC. The setup guide shows how
 The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
 This is my fork of the last version of it I had, with my own fixes on top.
 
-In here you'll find the fully reversed source code for GTA III ([master](https://github.com/hezkore/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/hezkore/hez-gta-re3/tree/miami/) branch).
+In here you'll find the fully reversed source code for GTA III ([master](https://github.com/33TU/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/33TU/hez-gta-re3/tree/miami/) branch).
 
 It builds and runs on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
 Rendering is handled either by original RenderWare (D3D8)
@@ -35,15 +35,15 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 ## Installation
 
 - You **must** own the games. re3 needs [a copy of GTA III](https://store.steampowered.com/app/12100/Grand_Theft_Auto_III/), reVC needs [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
-- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has these zips:
+- Build from source or check [this fork’s releases](https://github.com/33TU/hez-gta-re3/releases) for nightly archives.
   - `re3-windows-amd64-d3d9.zip` and `re3-linux-amd64-opengl.zip` for GTA III
   - `reVC-windows-amd64-d3d9.zip` and `reVC-linux-amd64-opengl.zip` for GTA Vice City
-  - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64-opengl.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/hezkore/hez-gta-re3/tree/lcs)
+  - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64-opengl.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/33TU/hez-gta-re3/tree/lcs)
 - The Windows builds use Direct3D 9, and the Linux builds use OpenGL. Only the Windows builds play the intro videos.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 - Start the binary with `-loadsave 1` to skip the intro and menus and load save slot 1 straight away, and with `-cheat gunsgunsguns` to enter a cheat as soon as you can play. `-cheat` can be given several times. `-spawncar kuruma` puts you in that car on the nearest road, and `-teleport X,Y,Z` puts you at those coordinates, or on the ground with only X and Y.
 
-A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.
+The nightly workflow checks for branch updates at midnight UTC and keeps the ten newest nightlies.
 
 ## Screenshots
 
@@ -112,7 +112,7 @@ Sorry for the inconvenience.
 
 When using premake, you may want to point GTA_III_RE_DIR environment variable to GTA3 root folder if you want the executable to be moved there via post-build script.
 
-Clone the repository with `git clone --recursive https://github.com/hezkore/hez-gta-re3.git`. Then `cd hez-gta-re3` into the cloned repository.
+Clone the repository with `git clone --recursive https://github.com/33TU/hez-gta-re3.git`. Then `cd hez-gta-re3` into the cloned repository.
 
 <details><summary>Linux Premake</summary>
 
