@@ -12,7 +12,7 @@ package com.adobe.flascc
 	import flash.text.*;
 	import flash.utils.*;
 
-	public class Console extends Sprite implements ISpecialFile
+	public final class Console extends Sprite implements ISpecialFile
 	{
 		private var ctx:Context3D, shader:Program3D, overlay:Program3D, bootFn:int, frameFn:int, keyFn:int;
 		private var audioRoot:String = "audio/", audioReady:Boolean, bankPtr:int, bankBytes:int, mixFn:int;
