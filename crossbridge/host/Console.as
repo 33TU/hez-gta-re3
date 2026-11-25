@@ -529,7 +529,9 @@ package com.adobe.flascc
 				if (e.type == MouseEvent.MOUSE_DOWN)
 				{
 					if (stage.displayState == StageDisplayState.NORMAL)
+					{
 						toggleMouseCapture();
+					}
 					else
 					{
 						try
@@ -565,7 +567,9 @@ package com.adobe.flascc
 				tappedButtons |= bit;
 			}
 			else
+			{
 				heldButtons &= ~bit;
+			}
 		}
 
 		private function mouseWheel(e:MouseEvent):void
@@ -580,7 +584,9 @@ package com.adobe.flascc
 			tappedButtons = 0;
 			// re3 detects wheel-button edges. Deliver these on its logical clock.
 			if (wheelPulse)
+			{
 				wheelPulse = false;
+			}
 			else if (wheelQueue.length)
 			{
 				buttons |= int(wheelQueue.shift());
@@ -615,7 +621,9 @@ package com.adobe.flascc
 					stage.mouseLock = true;
 				}
 				else
+				{
 					stage.displayState = StageDisplayState.NORMAL;
+				}
 			}
 			catch (err:Error)
 			{
@@ -759,7 +767,9 @@ package com.adobe.flascc
 							}
 						}
 						else if ((flags & FRAME_VEHICLE_NEARBY) && controlFrames % 80 == 4)
+						{
 							sendKey(70, true);
+						}
 						if (pressed[70] && controlFrames % 80 == 8)
 							sendKey(70, false);
 					}
@@ -875,7 +885,9 @@ package com.adobe.flascc
 			if (!b)
 				b = quads[key] = {ib: ctx.createIndexBuffer(capacity), vb: ctx.createVertexBuffer(capacity, stride)};
 			if (indices && kind == 3)
+			{
 				b.ib.uploadFromByteArray(CModule.ram, indices, 0, count);
+			}
 			else
 			{
 				scratch.length = nidx;
@@ -886,7 +898,9 @@ package com.adobe.flascc
 					if (i == 0)
 						first = vertex;
 					if (kind == 3)
+					{
 						scratch[cursor++] = vertex;
+					}
 					else if (i >= 2)
 					{
 						scratch[cursor++] = kind == 5 ? first : older;
