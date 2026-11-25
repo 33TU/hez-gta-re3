@@ -17,6 +17,17 @@ package com.adobe.flascc {
         private var sound:Sound, outputChannel:SoundChannel, chunkLoads:Array=[];
         private var stopped:Boolean;
         private var mouseDX:Number=0, mouseDY:Number=0;
+        // Button and frame bits exchanged with game.cpp.
+        private static const MOUSE_LEFT:int = 1;
+        private static const MOUSE_RIGHT:int = 2;
+        private static const MOUSE_MIDDLE:int = 4;
+        private static const MOUSE_WHEEL_UP:int = 8;
+        private static const MOUSE_WHEEL_DOWN:int = 16;
+        private static const FRAME_RUNNING:int = 1;
+        private static const FRAME_IN_CUTSCENE:int = 2;
+        private static const FRAME_IN_VEHICLE:int = 4;
+        private static const FRAME_HAS_CONTROL:int = 8;
+        private static const FRAME_VEHICLE_NEARBY:int = 16;
         private var heldButtons:int, tappedButtons:int, wheelQueue:Array=[], wheelPulse:Boolean;
         private var pageMouse:Boolean, pageLocked:Boolean;
         private var lastLocked:Boolean, captureKeyDown:Boolean, acceptMotionAt:int;
@@ -254,7 +265,7 @@ package com.adobe.flascc {
                 case "move": if(getTimer()>=acceptMotionAt) {mouseDX+=a;mouseDY+=b;} break;
                 case "down": heldButtons|=int(a);tappedButtons|=int(a);break;
                 case "up": heldButtons&=~int(a);break;
-                case "wheel": if(wheelQueue.length<16) wheelQueue.push(a>0?8:16);break;
+                case "wheel": if(wheelQueue.length<16) wheelQueue.push(a > 0 ? MOUSE_WHEEL_UP : MOUSE_WHEEL_DOWN);break;
                 }
             }
         }
@@ -286,16 +297,16 @@ package com.adobe.flascc {
             if(!started) return;
             var bit:int;
             switch(e.type) {
-                case MouseEvent.MOUSE_DOWN: case MouseEvent.MOUSE_UP: bit=1;break;
-                case MouseEvent.RIGHT_MOUSE_DOWN: case MouseEvent.RIGHT_MOUSE_UP: bit=2;break;
-                default: bit=4;
+                case MouseEvent.MOUSE_DOWN: case MouseEvent.MOUSE_UP: bit=MOUSE_LEFT;break;
+                case MouseEvent.RIGHT_MOUSE_DOWN: case MouseEvent.RIGHT_MOUSE_UP: bit=MOUSE_RIGHT;break;
+                default: bit=MOUSE_MIDDLE;
             }
             if(e.type==MouseEvent.MOUSE_DOWN || e.type==MouseEvent.RIGHT_MOUSE_DOWN || e.type==MouseEvent.MIDDLE_MOUSE_DOWN) {
                 heldButtons|=bit;tappedButtons|=bit;
             } else heldButtons&=~bit;
         }
         private function mouseWheel(e:MouseEvent):void {
-            if(!pageMouse && stage.mouseLock && started && e.delta && wheelQueue.length<16) wheelQueue.push(e.delta>0?8:16);
+            if(!pageMouse && stage.mouseLock && started && e.delta && wheelQueue.length<16) wheelQueue.push(e.delta > 0 ? MOUSE_WHEEL_UP : MOUSE_WHEEL_DOWN);
         }
         public function sampleMouseButtons():int {
             var buttons:int=heldButtons|tappedButtons;
@@ -380,7 +391,7 @@ package com.adobe.flascc {
                 ctx.clear(.3,.45,.58,1,1);
                 var flags:int=tickGame();
                 if(stopped) return;
-                if ((flags & 1) == 0) {
+                if ((flags & FRAME_RUNNING) == 0) {
                     stopGame("Game closed.", 0);
                     if (pageMouse) ExternalInterface.call("re3ReleaseMouse", true);
                     else if (stage.displayState != StageDisplayState.NORMAL)
@@ -390,14 +401,14 @@ package com.adobe.flascc {
                 }
                 frame++;
                 if(capture){
-                    if((flags&2) && frame%15==0)sendKey(32,true);
+                    if((flags & FRAME_IN_CUTSCENE) && frame%15==0)sendKey(32,true);
                     if(pressed[32] && frame%15==3)sendKey(32,false);
-                    if(frame>60 && (flags&8) && !(flags&2)){
+                    if(frame>60 && (flags & FRAME_HAS_CONTROL) && !(flags & FRAME_IN_CUTSCENE)){
                         if(++controlFrames==1) save(frame);
-                        if(flags&4){
+                        if(flags & FRAME_IN_VEHICLE){
                             if(++drivingFrames==10)sendKey(38,true);
                             if(drivingFrames==90){sendKey(38,false);save(frame);}
-                        }else if((flags&16) && controlFrames%80==4)sendKey(70,true);
+                        }else if((flags & FRAME_VEHICLE_NEARBY) && controlFrames%80==4)sendKey(70,true);
                         if(pressed[70] && controlFrames%80==8)sendKey(70,false);
                     }
                 }
@@ -417,12 +428,19 @@ package com.adobe.flascc {
         public function releaseTexture(id:int):void {
             if(gpu[id])gpu[id].dispose();delete gpu[id];delete textureData[id];
         }
+        // Draw state packed by render.cpp.
+        private static const DRAW_DEPTH_TEST:int = 1;
+        private static const DRAW_DEPTH_WRITE:int = 2;
+        private static const DRAW_VERTEX_ALPHA:int = 4;
+        private static const SRC_BLEND_SHIFT:int = 4;
+        private static const DEST_BLEND_SHIFT:int = 8;
+        private static const BLEND_FACTOR_MASK:int = 15;
         private const blendModes:Array=[null,"zero","one","sourceColor","oneMinusSourceColor",
             "sourceAlpha","oneMinusSourceAlpha","destinationAlpha","oneMinusDestinationAlpha",
             "destinationColor","oneMinusDestinationColor","sourceAlpha"];
         private function blend(flags:int):void {
-            ctx.setBlendFactors(blendModes[(flags>>>4)&15] || "sourceAlpha",
-                                blendModes[(flags>>>8)&15] || "oneMinusSourceAlpha");
+            ctx.setBlendFactors(blendModes[(flags >>> SRC_BLEND_SHIFT) & BLEND_FACTOR_MASK] || "sourceAlpha",
+                                blendModes[(flags >>> DEST_BLEND_SHIFT) & BLEND_FACTOR_MASK] || "oneMinusSourceAlpha");
         }
         private function constants(m:Vector.<Number>,color:uint,threshold:Number,ambient:int=0):void {
             ctx.setProgramConstantsFromVector("vertex",0,m,4);
@@ -447,7 +465,7 @@ package com.adobe.flascc {
             }
             ctx.setProgram(overlay);
             ctx.setProgramConstantsFromVector("vertex",0,screen,4);
-            ctx.setDepthTest((flags&2)!=0,(flags&1)?"lessEqual":"always");
+            ctx.setDepthTest((flags & DRAW_DEPTH_WRITE)!=0,(flags & DRAW_DEPTH_TEST)?"lessEqual":"always");
             blend(flags);
             var vb:VertexBuffer3D=b.vb;
             vb.uploadFromByteArray(CModule.ram,ptr,0,n);
@@ -483,7 +501,7 @@ package com.adobe.flascc {
             ctx.setProgram(world?shader:overlay);
             if(world) constants(mapMatrix,0xffffffff,0);
             else ctx.setProgramConstantsFromVector("vertex",0,screen,4);
-            ctx.setDepthTest((flags&2)!=0,(flags&1)?"lessEqual":"always");
+            ctx.setDepthTest((flags & DRAW_DEPTH_WRITE)!=0,(flags & DRAW_DEPTH_TEST)?"lessEqual":"always");
             blend(flags);
             ctx.setVertexBufferAt(0,b.vb,0,"float3");
             ctx.setVertexBufferAt(1,b.vb,world?3:4,"bytes4");ctx.setVertexBufferAt(2,b.vb,world?4:5,"float2");
@@ -506,7 +524,8 @@ package com.adobe.flascc {
         public function material(id:int,tex:int,first:int,tris:int,color:uint,flags:int,ambient:int):void {
             var b:Object=geometry[id];
             ctx.setProgram(shader);
-            constants(mapMatrix,color,(flags&4)?0.02:0.4,ambient);ctx.setDepthTest((flags&2)!=0,(flags&1)?"lessEqual":"always");
+            constants(mapMatrix,color,(flags & DRAW_VERTEX_ALPHA)?0.02:0.4,ambient);
+            ctx.setDepthTest((flags & DRAW_DEPTH_WRITE)!=0,(flags & DRAW_DEPTH_TEST)?"lessEqual":"always");
             blend(flags);
             ctx.setVertexBufferAt(0,b.vb,0,"float3");ctx.setVertexBufferAt(1,b.vb,3,"bytes4");
             ctx.setVertexBufferAt(2,b.vb,4,"float2");ctx.setTextureAt(0,gpu[tex]);ctx.drawTriangles(b.ib,first,tris);

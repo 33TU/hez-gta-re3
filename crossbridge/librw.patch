@@ -82,8 +82,8 @@
  	image->allocate();
  
  	if(pallength){
-+        // Palette texels are byte indices. Only the palette entries have RGBA channels.
-+        conv = conv_8_from_8;
++		// Palette texels are byte indices. Only the palette entries have RGBA channels.
++		conv = conv_8_from_8;
  		out = image->palette;
  		in = (uint8*)natras->palette;
  		for(int32 i = 0; i < pallength; i++){
