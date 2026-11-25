@@ -1,0 +1,74 @@
+name: Bug report
+description: Something is broken or acts wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **One bug per issue.** Found more than one? Open a new issue for each.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      description: Pick each game the bug shows up in.
+      multiple: true
+      options:
+        - GTA III
+        - GTA Vice City
+        - GTA Liberty City Stories
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - Windows
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: Check VERSION.txt in your game folder.
+      multiple: true
+      options:
+        - nightly-2026-11-25
+        - nightly-2026-11-24
+        - nightly-2026-11-23
+        - nightly-2026-11-22
+        - nightly-2026-11-21
+        - nightly-2026-11-20
+        - nightly-2026-10-29
+        - nightly-2026-09-01
+        - nightly-2026-08-31
+        - Older than nightly-2026-08-31
+        - Built from source
+    validations:
+      required: true
+  - type: textarea
+    id: bug
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to repeat the bug
+      placeholder: |
+        1. Start a new game
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots, videos or logs
