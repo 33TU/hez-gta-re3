@@ -1,5 +1,11 @@
 <img src="res/images/logo_1024.png" alt="reVC logo" width="200">
 
+## Browser port
+
+Build GTA Vice City for swf2es with ahead-of-time or in-browser compilation. The same CrossBridge SWF runs in swf2es Desktop and Adobe AIR. [Build and play the port](crossbridge/README.md)
+
+Bring your own installation of classic GTA Vice City for PC. The setup guide shows how to pack its models, missions, sound effects and radio for the player. [Prepare the game assets](crossbridge/README.md#prepare-your-local-game-data)
+
 ## Intro
 
 The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
@@ -11,10 +17,6 @@ It builds and runs on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and 
 Rendering is handled either by original RenderWare (D3D8)
 or the reimplementation [librw](https://github.com/aap/librw) (D3D9, OpenGL 2.1 or above, OpenGL ES 2.0 or above).\
 Audio is done with MSS (using dlls from original GTA) or OpenAL.
-
-## Vice City in the browser
-
-The CrossBridge port runs reVC on swf2es with your classic PC game files. [Build and play instructions](crossbridge/README.md)
 
 ## My fixes
 
