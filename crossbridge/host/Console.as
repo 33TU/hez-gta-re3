@@ -13,7 +13,7 @@ package com.adobe.flascc
 	import flash.ui.KeyLocation;
 	import flash.utils.*;
 
-	public class Console extends Sprite implements ISpecialFile
+	public final class Console extends Sprite implements ISpecialFile
 	{
 		private var ctx:Context3D, shader:Program3D, overlay:Program3D, bootFn:int, frameFn:int, keyFn:int;
 		private var maskedOverlay:Program3D, stencilAlphaTest:Boolean;
