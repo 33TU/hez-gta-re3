@@ -36,6 +36,7 @@ package com.adobe.flascc
 		private var heldButtons:int, tappedButtons:int, wheelQueue:Array = [], wheelPulse:Boolean;
 		private var pageMouse:Boolean, pageLocked:Boolean;
 		private var lastLocked:Boolean, captureKeyDown:Boolean, acceptMotionAt:int;
+		private const eventArgs:Vector.<int> = new Vector.<int>(2, true);
 		private var frameArgs:Vector.<int> = new Vector.<int>(3, true);
 		private var noArgs:Vector.<int> = new Vector.<int>();
 		private var air:Object, capture:Boolean, pack:ByteArray, loader:URLLoader, total:uint, done:uint;
@@ -453,7 +454,11 @@ package com.adobe.flascc
 			if (ctx)
 				ctx.configureBackBuffer(w, h, 0, true);
 			if (started)
-				callGame(resizeFn, Vector.<int>([w, h]));
+			{
+				eventArgs[0] = w;
+				eventArgs[1] = h;
+				callGame(resizeFn, eventArgs);
+			}
 		}
 
 		private function resetMouse():void
@@ -638,7 +643,11 @@ package com.adobe.flascc
 		{
 			pressed[code] = down;
 			if (started)
-				callGame(keyFn, Vector.<int>([code, int(down)]));
+			{
+				eventArgs[0] = code;
+				eventArgs[1] = int(down);
+				callGame(keyFn, eventArgs);
+			}
 		}
 
 		// Num Lock off sends navigation key codes with a keypad location.
@@ -672,9 +681,13 @@ package com.adobe.flascc
 				sendKey(code, down);
 		}
 
+		private const vertexCode:ByteArray = new ByteArray();
+		private const fragmentCode:ByteArray = new ByteArray();
+
 		private function agal(fragment:Boolean, ops:Array):ByteArray
 		{
-			var b:ByteArray = new ByteArray();
+			var b:ByteArray = fragment ? fragmentCode : vertexCode;
+			b.length = 0;
 			b.endian = "littleEndian";
 			b.writeByte(0xa0);
 			b.writeUnsignedInt(1);
@@ -718,9 +731,12 @@ package com.adobe.flascc
 							0, 0x030f0000, 0xe4000000, 2, 0, 0])); // mov oc,ft0
 			stencilAlphaTest = false;
 			ctx.setProgram(shader);
-			var white:ByteArray = new ByteArray();
-			white.writeUnsignedInt(0xffffffff);
-			textureData[0] = {data: white, w: 1, h: 1};
+			if (!textureData[0])
+			{
+				var white:ByteArray = new ByteArray();
+				white.writeUnsignedInt(0xffffffff);
+				textureData[0] = {data: white, w: 1, h: 1};
+			}
 			gpu = {};
 			quads = {};
 			for (var k:String in textureData)
@@ -812,6 +828,26 @@ package com.adobe.flascc
 			}
 		}
 
+		// Live textures and meshes own their bytes until release for context restoration.
+		// Keep enough spare buffers for one texture and one mesh's vertices and indices.
+		private const spareUploadBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
+
+		private function copyUploadBytes(ptr:int, length:int):ByteArray
+		{
+			var bytes:ByteArray = spareUploadBytes.length ? spareUploadBytes.pop() : new ByteArray();
+			bytes.writeBytes(CModule.ram, ptr, length);
+			return bytes;
+		}
+
+		private function recycleUploadBytes(bytes:ByteArray):void
+		{
+			if (spareUploadBytes.length < 3)
+			{
+				bytes.length = 0;
+				spareUploadBytes.push(bytes);
+			}
+		}
+
 		private function uploadTexture(id:int):void
 		{
 			var t:Object = textureData[id], tex:Texture = ctx.createTexture(t.w, t.h, "bgra", false);
@@ -821,8 +857,7 @@ package com.adobe.flascc
 
 		public function texture(id:int, ptr:int, w:int, h:int):void
 		{
-			var data:ByteArray = new ByteArray();
-			data.writeBytes(CModule.ram, ptr, w * h * 4);
+			var data:ByteArray = copyUploadBytes(ptr, w * h * 4);
 			textureData[id] = {data: data, w: w, h: h};
 			uploadTexture(id);
 		}
@@ -832,6 +867,8 @@ package com.adobe.flascc
 			if (gpu[id])
 				gpu[id].dispose();
 			delete gpu[id];
+			if (textureData[id])
+				recycleUploadBytes(textureData[id].data);
 			delete textureData[id];
 		}
 
@@ -877,15 +914,23 @@ package com.adobe.flascc
 					blendModes[(flags >>> DEST_BLEND_SHIFT) & BLEND_FACTOR_MASK] || "oneMinusSourceAlpha");
 		}
 
+		private const ambientConstants:Vector.<Number> = new Vector.<Number>(4, true);
+		private const fragmentConstants:Vector.<Number> = new Vector.<Number>(8, true);
+
 		private function constants(m:Vector.<Number>, color:uint, threshold:Number, ambient:int = 0):void
 		{
 			ctx.setProgramConstantsFromVector("vertex", 0, m, 4);
-			ctx.setProgramConstantsFromVector("vertex", 4, Vector.<Number>([ambient / 255, ambient / 255, ambient / 255, 0]), 1);
-			ctx.setProgramConstantsFromVector("fragment", 0, Vector.<Number>([threshold, 0, 0, 0,
-							(color & 255) / 255, ((color >>> 8) & 255) / 255, ((color >>> 16) & 255) / 255, (color >>> 24) / 255]), 2);
+			ambientConstants[0] = ambientConstants[1] = ambientConstants[2] = ambient / 255;
+			ctx.setProgramConstantsFromVector("vertex", 4, ambientConstants, 1);
+			fragmentConstants[0] = threshold;
+			fragmentConstants[4] = (color & 255) / 255;
+			fragmentConstants[5] = ((color >>> 8) & 255) / 255;
+			fragmentConstants[6] = ((color >>> 16) & 255) / 255;
+			fragmentConstants[7] = (color >>> 24) / 255;
+			ctx.setProgramConstantsFromVector("fragment", 0, fragmentConstants, 2);
 		}
 
-		private var scratch:Vector.<uint> = new Vector.<uint>();
+		private const indexScratch:Vector.<uint> = new Vector.<uint>();
 		// Most screen draws (sky bands, character quads and the HUD) reuse
 		// an immutable triangle list for a given primitive type and size.
 		private function screenPrimitive(kind:int, ptr:int, n:int, textureId:int, flags:int):void
@@ -893,16 +938,16 @@ package com.adobe.flascc
 			var key:String = "screen/" + kind + "/" + n, b:Object = quads[key];
 			if (!b)
 			{
-				var indices:Vector.<uint> = new Vector.<uint>();
+				indexScratch.length = 0;
 				for (var i:int = 0; i < n; i++)
 				{
 					if (kind == 3)
-						indices.push(i);
+						indexScratch.push(i);
 					else if (i >= 2)
-						indices.push(kind == 4 ? i - 2 : 0, i - 1, i);
+						indexScratch.push(kind == 4 ? i - 2 : 0, i - 1, i);
 				}
-				var ib:IndexBuffer3D = ctx.createIndexBuffer(indices.length);
-				ib.uploadFromVector(indices, 0, indices.length);
+				var ib:IndexBuffer3D = ctx.createIndexBuffer(indexScratch.length);
+				ib.uploadFromVector(indexScratch, 0, indexScratch.length);
 				b = quads[key] = {ib: ib, vb: ctx.createVertexBuffer(n, 7)};
 			}
 			ctx.setProgram(stencilAlphaTest ? maskedOverlay : overlay);
@@ -939,7 +984,7 @@ package com.adobe.flascc
 			}
 			else
 			{
-				scratch.length = nidx;
+				indexScratch.length = nidx;
 				var cursor:int = 0, prev:int = 0, first:int = 0, older:int = 0;
 				for (var i:int = 0; i < count; i++)
 				{
@@ -948,18 +993,18 @@ package com.adobe.flascc
 						first = vertex;
 					if (kind == 3)
 					{
-						scratch[cursor++] = vertex;
+						indexScratch[cursor++] = vertex;
 					}
 					else if (i >= 2)
 					{
-						scratch[cursor++] = kind == 5 ? first : older;
-						scratch[cursor++] = prev;
-						scratch[cursor++] = vertex;
+						indexScratch[cursor++] = kind == 5 ? first : older;
+						indexScratch[cursor++] = prev;
+						indexScratch[cursor++] = vertex;
 					}
 					older = prev;
 					prev = vertex;
 				}
-				b.ib.uploadFromVector(scratch, 0, nidx);
+				b.ib.uploadFromVector(indexScratch, 0, nidx);
 			}
 			b.vb.uploadFromByteArray(CModule.ram, ptr, 0, n);
 			ctx.setProgram(world ? shader : (stencilAlphaTest ? maskedOverlay : overlay));
@@ -986,9 +1031,8 @@ package com.adobe.flascc
 
 		public function mesh(id:int, ptr:int, n:int, indices:int, count:int):void
 		{
-			var data:ByteArray = new ByteArray(), ix:ByteArray = new ByteArray();
-			data.writeBytes(CModule.ram, ptr, 24 * n);
-			ix.writeBytes(CModule.ram, indices, count * 2);
+			var data:ByteArray = copyUploadBytes(ptr, 24 * n);
+			var ix:ByteArray = copyUploadBytes(indices, count * 2);
 			var m:Object = geometry[id] = {data: data, indices: ix, n: n, count: count};
 			uploadMesh(m);
 		}
@@ -1006,6 +1050,8 @@ package com.adobe.flascc
 			{
 				m.vb.dispose();
 				m.ib.dispose();
+				recycleUploadBytes(m.data);
+				recycleUploadBytes(m.indices);
 				delete geometry[id];
 			}
 		}
@@ -1030,15 +1076,18 @@ package com.adobe.flascc
 			ctx.drawTriangles(b.ib, first, tris);
 		}
 
+		private const captureBytes:ByteArray = new ByteArray();
+
 		private function save(n:int):void
 		{
 			var bmp:BitmapData = new BitmapData(renderWidth, renderHeight, false, 0);
 			ctx.drawToBitmapData(bmp);
-			var data:ByteArray = bmp.encode(bmp.rect, new PNGEncoderOptions());
+			captureBytes.length = 0;
+			bmp.encode(bmp.rect, new PNGEncoderOptions(), captureBytes);
 			var file:Class = getDefinitionByName("flash.filesystem.File") as Class;
 			var stream:Object = new (getDefinitionByName("flash.filesystem.FileStream") as Class)();
 			stream.open(new file(file.applicationDirectory.resolvePath("frame-" + n + ".png").nativePath), "write");
-			stream.writeBytes(data);
+			stream.writeBytes(captureBytes);
 			stream.close();
 			bmp.dispose();
 		}
